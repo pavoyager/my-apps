@@ -139,11 +139,16 @@
   .cal-wcol:first-child{border-left:none;}
   .cal-wcol.today{background:rgba(79,70,229,0.05);}
 
+  .cal-tilegroup{
+    position:absolute;left:0;right:0;border-radius:8px;overflow:hidden;
+    border:1.5px solid var(--accent);box-sizing:border-box;
+  }
   .cal-tile{
-    position:absolute;left:2px;right:2px;border-radius:4px;cursor:pointer;
-    border:1.5px solid transparent;box-sizing:border-box;transition:opacity .12s ease;
+    position:absolute;left:0;right:0;cursor:pointer;
+    border-top:1.5px solid var(--accent);box-sizing:border-box;transition:opacity .12s ease;
   }
   .cal-tile:hover{opacity:0.8;}
+  .cal-wcol .cal-tile:first-of-type{border-top:none;}
 
   .cal-now{position:absolute;left:0;right:0;height:2px;background:var(--accent);z-index:6;pointer-events:none;}
   .cal-now.today::before{content:'';position:absolute;left:-3px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--accent);}
@@ -151,6 +156,11 @@
     position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
     background:var(--accent);color:#fff;font-size:9px;font-weight:700;line-height:1.4;
     padding:1px 5px;border-radius:6px;white-space:nowrap;
+  }
+  .cal-start{
+    position:absolute;left:50%;width:11px;height:11px;border-radius:50%;
+    background:var(--accent);border:2px solid var(--card);transform:translate(-50%,-50%);
+    cursor:pointer;z-index:4;
   }
 
   .cal-nav{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
@@ -547,13 +557,20 @@
   function applyHourHeight(){
     const innerH = 24 * hourHeight;
     $('calColsInner').style.height = innerH + 'px';
-    $('calColsInner').querySelectorAll('.cal-gridline, .cal-now').forEach(el => {
+    $('calColsInner').querySelectorAll('.cal-gridline, .cal-now, .cal-start').forEach(el => {
       const h = parseFloat(el.getAttribute('data-h'));
       el.style.top = (h * hourHeight) + 'px';
     });
+    $('calColsInner').querySelectorAll('.cal-tilegroup').forEach(el => {
+      const h0 = parseFloat(el.getAttribute('data-h0')), h1 = parseFloat(el.getAttribute('data-h1'));
+      el.style.top = (h0 * hourHeight) + 'px';
+      el.style.height = Math.max((h1 - h0) * hourHeight, 3) + 'px';
+    });
     $('calColsInner').querySelectorAll('.cal-tile').forEach(el => {
       const h0 = parseFloat(el.getAttribute('data-h0')), h1 = parseFloat(el.getAttribute('data-h1'));
-      const top = Math.min(h0, h1) * hourHeight;
+      const group = el.closest('.cal-tilegroup');
+      const baseH = group ? parseFloat(group.getAttribute('data-h0')) : 0;
+      const top = (Math.min(h0, h1) - baseH) * hourHeight;
       const h = Math.max(Math.abs(h1 - h0) * hourHeight, 3);
       el.style.top = top + 'px';
       el.style.height = h + 'px';
@@ -608,11 +625,21 @@
       for (let i=1; i<de.length; i++){
         const gapMin = Math.round((new Date(de[i].ts) - new Date(de[i-1].ts))/60000);
         const ratio = maxG > minG ? (gapMin - minG) / (maxG - minG) : 0.5;
-        const hue = 8 + ratio * 137; // shortest pause = coral/red, longest = green
-        const border = `hsl(${hue.toFixed(0)}, 50%, 48%)`;
-        const fill = `hsla(${hue.toFixed(0)}, 55%, 55%, 0.16)`;
+        const light = 30 + ratio * 65; // short pause = dark blue, long pause = near white
+        const fill = `hsl(243, 68%, ${light.toFixed(0)}%)`;
         const h0 = hourOf(de[i-1].ts), h1 = hourOf(de[i].ts);
-        tilesHtml += `<div class="cal-tile" data-ts="${de[i].ts}" data-h0="${h0}" data-h1="${h1}" style="background:${fill};border-color:${border}"></div>`;
+        tilesHtml += `<div class="cal-tile" data-ts="${de[i].ts}" data-h0="${h0}" data-h1="${h1}" style="background:${fill}"></div>`;
+      }
+      let groupHtml = '';
+      if (de.length >= 2){
+        const groupH0 = hourOf(de[0].ts), groupH1 = hourOf(de[de.length-1].ts);
+        groupHtml = `<div class="cal-tilegroup" data-h0="${groupH0}" data-h1="${groupH1}">${tilesHtml}</div>`;
+      }
+      // the first cigarette of a day has no pause-tile before it (nothing to compare against),
+      // so it'd never be clickable/deletable — give it its own small dot marker.
+      let startHtml = '';
+      if (de.length >= 1){
+        startHtml = `<div class="cal-start" data-ts="${de[0].ts}" data-h="${hourOf(de[0].ts)}"></div>`;
       }
       // "now" line runs across today and every past day of the visible week, each with a
       // count-so-far label, so it reaches all the way to the left across the whole week.
@@ -621,13 +648,13 @@
         const countSoFar = de.filter(e => hourOf(e.ts) <= nowH).length;
         nowHtml = `<div class="cal-now${d.isToday?' today':''}" data-h="${nowH}"><span class="cal-now-count">${countSoFar}</span></div>`;
       }
-      colsHtml += `<div class="cal-wcol${d.isToday?' today':''}">${tilesHtml}${nowHtml}</div>`;
+      colsHtml += `<div class="cal-wcol${d.isToday?' today':''}">${groupHtml}${startHtml}${nowHtml}</div>`;
     });
 
     $('calColsInner').innerHTML = glHtml + colsHtml;
     applyHourHeight();
-    $('calColsInner').querySelectorAll('.cal-tile').forEach(tile => {
-      tile.addEventListener('click', (ev) => openEntryPopover(ev, tile.getAttribute('data-ts')));
+    $('calColsInner').querySelectorAll('.cal-tile, .cal-start').forEach(el => {
+      el.addEventListener('click', (ev) => openEntryPopover(ev, el.getAttribute('data-ts')));
     });
   }
 
@@ -827,7 +854,9 @@
   let calViewMode = 'grid';
   function updateCalNavLabel(days){
     $('calNavLabel').textContent = dayOffset === 0 ? 'Letzte 7 Tage' : (days[0].dm + ' – ' + days[6].dm);
-    $('weekNext').style.visibility = dayOffset === 0 ? 'hidden' : 'visible';
+    const atToday = dayOffset === 0;
+    $('weekNext').style.opacity = atToday ? '0.3' : '1';
+    $('weekNext').style.pointerEvents = atToday ? 'none' : 'auto';
   }
   function shiftDays(delta){
     dayOffset = Math.min(dayOffset + delta, 0);
