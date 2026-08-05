@@ -109,6 +109,8 @@
   /* ---------- section title ---------- */
   .section-title-row{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;margin:0 0 12px 2px;}
   .section-title-row .heading{font-size:20px;}
+  #calTitle{cursor:pointer;user-select:none;transition:opacity .12s ease;}
+  #calTitle:active{opacity:0.6;}
   .mini-icon-btn{
     width:32px;height:32px;border:none;background:transparent;flex:0 0 auto;
     color:var(--ink-soft);display:flex;align-items:center;justify-content:center;
@@ -145,6 +147,21 @@
 
   .cal-now{position:absolute;left:0;right:0;height:2px;background:var(--danger);z-index:5;}
   .cal-now::before{content:'';position:absolute;left:-3px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--danger);}
+
+  /* ---------- calendar: bar-chart view (daily totals) ---------- */
+  .cal-bars{flex:1;display:none;flex-direction:column;min-height:0;}
+  .cal-bars.active{display:flex;}
+  .calbar-chart{
+    flex:1;display:flex;align-items:flex-end;gap:8px;min-height:0;padding:14px 10px 10px;
+    background:var(--card);border:1px solid var(--border);border-radius:10px;
+  }
+  .calbar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
+  .calbar-val{font-size:12px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+  .calbar-fill{width:100%;background:var(--accent-soft);border-radius:6px 6px 3px 3px;min-height:3px;transition:height .25s ease;}
+  .calbar-fill.today{background:var(--accent);}
+  .calbar-labels{flex:0 0 auto;display:flex;gap:8px;margin-top:8px;}
+  .calbar-label{flex:1;text-align:center;font-size:10.5px;font-weight:600;color:var(--ink-soft);}
+  .calbar-label.today{color:var(--accent);}
 
   /* ---------- entry popover ---------- */
   .popover-backdrop{position:fixed;inset:0;z-index:55;display:none;}
@@ -280,11 +297,15 @@
   <section class="screen" id="screenCalendar">
     <div class="screen-inner">
       <div class="section-title-row">
-        <div class="heading">Kalender</div>
+        <div class="heading" id="calTitle">Kalender</div>
         <button class="mini-icon-btn" id="backfillBtn" aria-label="Nachtragen" title="Nachtragen"><i data-lucide="clock" class="icon"></i></button>
       </div>
       <div class="cal-week-header" id="calWeekHeader"></div>
       <div class="cal-cols" id="calCols"><div class="cal-cols-inner" id="calColsInner"></div></div>
+      <div class="cal-bars" id="calBars">
+        <div class="calbar-chart" id="calBarsChart"></div>
+        <div class="calbar-labels" id="calBarsLabels"></div>
+      </div>
     </div>
   </section>
 
@@ -455,7 +476,7 @@
     const nowH = now.getHours() + now.getMinutes()/60;
     const wakeH = parseHM(settings.wakeTime);
     const sleepH = parseHM(settings.sleepTime);
-    if (dayEntries.length === 0) return null;
+    if (dayEntries.length < 2) return null; // need at least two to estimate a pace, backfilled or not
     const firstH = Math.max(wakeH, new Date(dayEntries[0].ts).getHours() + new Date(dayEntries[0].ts).getMinutes()/60);
     const elapsed = Math.max(nowH - firstH, 0.25);
     const rate = dayEntries.length / elapsed;
@@ -623,7 +644,7 @@
 
     $('savedTotal').textContent = fmtEUR(computeSavedTotal());
 
-    renderCalendar();
+    if (calViewMode === 'grid') renderCalendar(); else renderCalBars();
   }
 
   // ---- entry popover ----
@@ -695,7 +716,9 @@
   $('backfillSave').addEventListener('click', () => {
     const dateVal = $('backfillDate').value, timeVal = $('backfillTime').value;
     if (!dateVal || !timeVal){ showToast('Bitte Datum & Uhrzeit angeben'); return; }
-    const ts = new Date(dateVal + 'T' + timeVal + ':00');
+    const [y, mo, da] = dateVal.split('-').map(Number);
+    const [hh, mi] = timeVal.split(':').map(Number);
+    const ts = new Date(y, mo-1, da, hh, mi, 0); // explicit components = always local time, no string-parsing ambiguity
     if (isNaN(ts.getTime())){ showToast('Ungültiges Datum'); return; }
     if (ts > new Date()){ showToast('Zeitpunkt liegt in der Zukunft'); return; }
     entries.push({ ts: ts.toISOString(), backfilled: true });
@@ -779,6 +802,34 @@
     };
     reader.readAsText(file);
   });
+
+  // ---- calendar view toggle: hour-grid vs. simple bar chart ----
+  let calViewMode = 'grid';
+  function renderCalBars(){
+    const days = getWeekDays();
+    const counts = days.map(d => entriesForDay(d.key).length);
+    const maxC = Math.max(...counts, 1);
+    $('calBarsChart').innerHTML = days.map((d,i) => {
+      const pct = counts[i] > 0 ? Math.max((counts[i]/maxC)*100, 4) : 0;
+      return `<div class="calbar-col">
+        <div class="calbar-val">${counts[i]}</div>
+        <div class="calbar-fill${d.isToday?' today':''}" style="height:${pct}%"></div>
+      </div>`;
+    }).join('');
+    $('calBarsLabels').innerHTML = days.map(d =>
+      `<div class="calbar-label${d.isToday?' today':''}">${d.wd}</div>`
+    ).join('');
+  }
+  function setCalView(mode){
+    calViewMode = mode;
+    const showGrid = mode === 'grid';
+    $('calWeekHeader').style.display = showGrid ? 'flex' : 'none';
+    $('calCols').style.display = showGrid ? '' : 'none';
+    $('calBars').classList.toggle('active', !showGrid);
+    if (showGrid){ renderCalendar(); fitToAwakeRange(); }
+    else { renderCalBars(); }
+  }
+  $('calTitle').addEventListener('click', () => setCalView(calViewMode === 'grid' ? 'bars' : 'grid'));
 
   // ---- calendar pinch-to-zoom ----
   let pinchState = null;
