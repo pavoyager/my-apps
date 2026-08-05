@@ -141,11 +141,11 @@
 
   .cal-tilegroup{
     position:absolute;left:0;right:0;border-radius:8px;overflow:hidden;
-    border:1.5px solid var(--accent);box-sizing:border-box;
+    border:1.5px solid #8B87E8;box-sizing:border-box;
   }
   .cal-tile{
     position:absolute;left:0;right:0;cursor:pointer;
-    border-top:1.5px solid var(--accent);box-sizing:border-box;transition:opacity .12s ease;
+    border-top:1.5px solid #8B87E8;box-sizing:border-box;transition:opacity .12s ease;
   }
   .cal-tile:hover{opacity:0.8;}
   .cal-wcol .cal-tile:first-of-type{border-top:none;}
@@ -625,8 +625,8 @@
       for (let i=1; i<de.length; i++){
         const gapMin = Math.round((new Date(de[i].ts) - new Date(de[i-1].ts))/60000);
         const ratio = maxG > minG ? (gapMin - minG) / (maxG - minG) : 0.5;
-        const light = 30 + ratio * 65; // short pause = dark blue, long pause = near white
-        const fill = `hsl(243, 68%, ${light.toFixed(0)}%)`;
+        const light = 52 + ratio * 42; // short pause = soft mid blue, long pause = pale blue
+        const fill = `hsl(235, 42%, ${light.toFixed(0)}%)`;
         const h0 = hourOf(de[i-1].ts), h1 = hourOf(de[i].ts);
         tilesHtml += `<div class="cal-tile" data-ts="${de[i].ts}" data-h0="${h0}" data-h1="${h1}" style="background:${fill}"></div>`;
       }
