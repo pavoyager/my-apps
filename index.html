@@ -145,8 +145,16 @@
   }
   .cal-tile:hover{opacity:0.8;}
 
-  .cal-now{position:absolute;left:0;right:0;height:2px;background:var(--danger);z-index:5;}
-  .cal-now::before{content:'';position:absolute;left:-3px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--danger);}
+  .cal-now{position:absolute;left:0;right:0;height:2px;background:var(--accent);z-index:6;pointer-events:none;}
+  .cal-now.today::before{content:'';position:absolute;left:-3px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--accent);}
+  .cal-now-count{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    background:var(--accent);color:#fff;font-size:9px;font-weight:700;line-height:1.4;
+    padding:1px 5px;border-radius:6px;white-space:nowrap;
+  }
+
+  .cal-nav{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .cal-nav-label{font-size:12.5px;font-weight:600;color:var(--ink-soft);}
 
   /* ---------- calendar: bar-chart view (daily totals) ---------- */
   .cal-bars{flex:1;display:none;flex-direction:column;min-height:0;}
@@ -300,6 +308,11 @@
       <div class="section-title-row">
         <div class="heading" id="calTitle">Kalender</div>
         <button class="mini-icon-btn" id="backfillBtn" aria-label="Nachtragen" title="Nachtragen"><i data-lucide="clock" class="icon"></i></button>
+      </div>
+      <div class="cal-nav">
+        <button class="mini-icon-btn" id="weekPrev" aria-label="Vorherige Woche"><i data-lucide="chevron-left" class="icon"></i></button>
+        <div class="cal-nav-label" id="calNavLabel">Letzte 7 Tage</div>
+        <button class="mini-icon-btn" id="weekNext" aria-label="Nächste Woche"><i data-lucide="chevron-right" class="icon"></i></button>
       </div>
       <div class="cal-week-header" id="calWeekHeader"></div>
       <div class="cal-cols" id="calCols"><div class="cal-cols-inner" id="calColsInner"></div></div>
@@ -507,14 +520,14 @@
     return Math.max(daysTracked * baselineCigs - entries.length, 0) * pricePerCig();
   }
 
-  function getWeekDays(){
+  let dayOffset = 0; // 0 = window ends today; each step shifts by 1 day (can't go into the future)
+
+  function getWeekDays(offset){
     const now = new Date();
-    const dow = now.getDay(); // 0=So,1=Mo,...6=Sa
-    const diffToMonday = (dow === 0 ? -6 : 1 - dow);
-    const monday = new Date(now); monday.setDate(now.getDate() + diffToMonday); monday.setHours(0,0,0,0);
+    const end = new Date(now); end.setDate(end.getDate() + (offset||0)); end.setHours(0,0,0,0);
     const days = [];
-    for(let i=0;i<7;i++){
-      const d = new Date(monday); d.setDate(monday.getDate()+i);
+    for (let i=6; i>=0; i--){
+      const d = new Date(end); d.setDate(end.getDate() - i);
       days.push({
         key: todayKeyStr(d),
         wd: d.toLocaleDateString('de-DE', {weekday:'short'}).slice(0,2),
@@ -524,7 +537,6 @@
     }
     return days;
   }
-  const yPos = hourDecimal => (hourDecimal/24)*100; // unused now, kept for reference
   const hourOf = iso => { const d = new Date(iso); return d.getHours() + d.getMinutes()/60 + d.getSeconds()/3600; };
 
   // ---- calendar zoom state ----
@@ -560,7 +572,8 @@
   }
 
   function renderCalendar(){
-    const days = getWeekDays();
+    const days = getWeekDays(dayOffset);
+    updateCalNavLabel(days);
 
     $('calWeekHeader').innerHTML = days.map(d =>
       `<div class="cal-weekcell${d.isToday?' today':''}"><div class="d">${d.wd}</div><div class="n">${d.dm}</div></div>`
@@ -584,6 +597,10 @@
       glHtml += `<div class="cal-gridline" data-h="${h}"></div>`;
     }
 
+    const now = new Date();
+    const nowH = now.getHours() + now.getMinutes()/60;
+    const todayStr = todayKeyStr(now);
+
     let colsHtml = '';
     days.forEach(d => {
       const de = dayEntriesMap[d.key];
@@ -597,10 +614,12 @@
         const h0 = hourOf(de[i-1].ts), h1 = hourOf(de[i].ts);
         tilesHtml += `<div class="cal-tile" data-ts="${de[i].ts}" data-h0="${h0}" data-h1="${h1}" style="background:${fill};border-color:${border}"></div>`;
       }
+      // "now" line runs across today and every past day of the visible week, each with a
+      // count-so-far label, so it reaches all the way to the left across the whole week.
       let nowHtml = '';
-      if (d.isToday){
-        const now = new Date();
-        nowHtml = `<div class="cal-now" data-h="${now.getHours()+now.getMinutes()/60}"></div>`;
+      if (d.key <= todayStr){
+        const countSoFar = de.filter(e => hourOf(e.ts) <= nowH).length;
+        nowHtml = `<div class="cal-now${d.isToday?' today':''}" data-h="${nowH}"><span class="cal-now-count">${countSoFar}</span></div>`;
       }
       colsHtml += `<div class="cal-wcol${d.isToday?' today':''}">${tilesHtml}${nowHtml}</div>`;
     });
@@ -806,8 +825,21 @@
 
   // ---- calendar view toggle: hour-grid vs. simple bar chart ----
   let calViewMode = 'grid';
+  function updateCalNavLabel(days){
+    $('calNavLabel').textContent = dayOffset === 0 ? 'Letzte 7 Tage' : (days[0].dm + ' – ' + days[6].dm);
+    $('weekNext').style.visibility = dayOffset === 0 ? 'hidden' : 'visible';
+  }
+  function shiftDays(delta){
+    dayOffset = Math.min(dayOffset + delta, 0);
+    if (calViewMode === 'grid'){ renderCalendar(); fitToAwakeRange(); }
+    else { renderCalBars(); }
+  }
+  $('weekPrev').addEventListener('click', () => shiftDays(-1));
+  $('weekNext').addEventListener('click', () => shiftDays(1));
+
   function renderCalBars(){
-    const days = getWeekDays();
+    const days = getWeekDays(dayOffset);
+    updateCalNavLabel(days);
     const counts = days.map(d => entriesForDay(d.key).length);
     const maxC = Math.max(...counts, 1);
     $('calBarsChart').innerHTML = days.map((d,i) => {
@@ -878,6 +910,12 @@
       const idx = parseInt(d.getAttribute('data-idx'));
       pagerEl.scrollTo({ left: idx * pagerEl.clientWidth, behavior:'smooth' });
     });
+  });
+
+  // ---- live updates: keep "now"-dependent stats & the now-line current without reloading ----
+  setInterval(() => { render(); }, 30000); // every 30s: cheap (no zoom/scroll reset)
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) render();
   });
 
   loadAll();
