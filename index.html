@@ -141,11 +141,11 @@
 
   .cal-tilegroup{
     position:absolute;left:0;right:0;border-radius:8px;overflow:hidden;
-    border:1.5px solid #8B87E8;box-sizing:border-box;
+    border:1.5px solid var(--accent);box-sizing:border-box;
   }
   .cal-tile{
     position:absolute;left:0;right:0;cursor:pointer;
-    border-top:1.5px solid #8B87E8;box-sizing:border-box;transition:opacity .12s ease;
+    border-top:1.5px solid var(--accent);box-sizing:border-box;transition:opacity .12s ease;
   }
   .cal-tile:hover{opacity:0.8;}
   .cal-wcol .cal-tile:first-of-type{border-top:none;}
@@ -522,12 +522,30 @@
   function pricePerCig(){ return settings.pricePerPack / settings.cigsPerPack; }
   function computeSavedTotal(){
     if (entries.length === 0) return 0;
+    const todayStr = todayKeyStr();
     const sorted = [...entries].sort((a,b)=> new Date(a.ts) - new Date(b.ts));
     const firstDay = new Date(sorted[0].ts); firstDay.setHours(0,0,0,0);
     const today = new Date(); today.setHours(0,0,0,0);
-    const daysTracked = Math.round((today - firstDay) / 86400000) + 1;
+    const daysTrackedTotal = Math.round((today - firstDay) / 86400000) + 1;
+    const pastDays = Math.max(daysTrackedTotal - 1, 0);
     const baselineCigs = settings.baselinePacks * settings.cigsPerPack;
-    return Math.max(daysTracked * baselineCigs - entries.length, 0) * pricePerCig();
+
+    const pastCount = entries.filter(e => todayKeyStr(new Date(e.ts)) !== todayStr).length;
+    const todayCount = entries.length - pastCount;
+
+    // complete past days: full baseline each
+    const pastSaved = Math.max(pastDays * baselineCigs - pastCount, 0) * pricePerCig();
+
+    // today: baseline prorated by how far into the waking day we currently are
+    const wakeH = parseHM(settings.wakeTime), sleepH = parseHM(settings.sleepTime);
+    const wakingSpan = Math.max(sleepH - wakeH, 0.5);
+    const now = new Date();
+    const nowH = now.getHours() + now.getMinutes()/60;
+    const elapsedWaking = Math.min(Math.max(nowH - wakeH, 0), wakingSpan);
+    const expectedToday = baselineCigs * (elapsedWaking / wakingSpan);
+    const todaySaved = Math.max(expectedToday - todayCount, 0) * pricePerCig();
+
+    return pastSaved + todaySaved;
   }
 
   let dayOffset = 0; // 0 = window ends today; each step shifts by 1 day (can't go into the future)
@@ -625,7 +643,7 @@
       for (let i=1; i<de.length; i++){
         const gapMin = Math.round((new Date(de[i].ts) - new Date(de[i-1].ts))/60000);
         const ratio = maxG > minG ? (gapMin - minG) / (maxG - minG) : 0.5;
-        const light = 52 + ratio * 42; // short pause = soft mid blue, long pause = pale blue
+        const light = 58 + ratio * 32; // short pause = soft mid blue, long pause = light blue (never pure white)
         const fill = `hsl(235, 42%, ${light.toFixed(0)}%)`;
         const h0 = hourOf(de[i-1].ts), h1 = hourOf(de[i].ts);
         tilesHtml += `<div class="cal-tile" data-ts="${de[i].ts}" data-h0="${h0}" data-h1="${h1}" style="background:${fill}"></div>`;
