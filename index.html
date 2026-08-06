@@ -106,6 +106,31 @@
   .stat .value{font-size:24px;font-weight:700;line-height:1;letter-spacing:-0.01em;color:var(--ink);}
   .stat .sub{font-size:11px;color:var(--ink-soft);margin-top:5px;}
 
+  /* ---------- cashout card (test) ---------- */
+  .cashout-card{
+    flex:0 0 auto;margin-top:10px;padding:16px 18px;text-align:center;cursor:pointer;
+    transition:background .3s ease,border-color .3s ease,transform .15s ease;
+  }
+  .cashout-card:active{transform:scale(0.98);}
+  .cashout-card .label{font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-soft);}
+  .cashout-card .value{font-size:30px;font-weight:800;letter-spacing:-0.01em;color:var(--ink);margin-top:4px;}
+  .cashout-card .sub{font-size:12px;color:var(--ink-soft);margin-top:6px;}
+  .cashout-card.ready{
+    background:var(--accent);border-color:var(--accent);cursor:pointer;
+    animation:cashoutPulse 1.8s ease-in-out infinite;
+  }
+  .cashout-card.ready .label,
+  .cashout-card.ready .value,
+  .cashout-card.ready .sub{color:#fff;}
+  .cashout-card.ready:active{transform:scale(0.97);}
+  @keyframes cashoutPulse{0%,100%{box-shadow:0 0 0 0 rgba(79,70,229,0.35);}50%{box-shadow:0 0 0 8px rgba(79,70,229,0);}}
+
+  .confetti-piece{position:absolute;border-radius:2px;opacity:0.95;}
+  @keyframes confettiBurst{
+    0%{ transform:translate(-50%,-50%) rotate(0deg); opacity:1; }
+    100%{ transform:translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(var(--rot)); opacity:0; }
+  }
+
   /* ---------- section title ---------- */
   .section-title-row{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;margin:0 0 12px 2px;}
   .section-title-row .heading{font-size:20px;}
@@ -249,6 +274,19 @@
   .btn.secondary:hover{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
   .reset-row{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
   .reset-row a{display:inline-flex;align-items:center;gap:5px;color:var(--danger);font-size:12.5px;font-weight:600;text-decoration:underline;cursor:pointer;}
+
+  .payout-list{display:flex;flex-direction:column;gap:8px;margin:14px 0;max-height:300px;overflow-y:auto;}
+  .payout-item{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:11px 13px;background:var(--bg);border:1px solid var(--border);border-radius:9px;font-size:13.5px;
+  }
+  .payout-item .pdate{color:var(--ink);font-weight:600;}
+  .payout-item .pamount{color:var(--accent);font-weight:700;}
+  .payout-summary{
+    display:flex;justify-content:space-between;padding-top:12px;border-top:1px solid var(--border);
+    font-size:13px;color:var(--ink-soft);font-weight:600;
+  }
+  .payout-empty{padding:22px 0;text-align:center;color:var(--ink-soft);font-size:13px;}
   #importFile{display:none;}
 
   .toast{
@@ -307,6 +345,12 @@
               <div class="sub">hochgerechnet</div>
             </div>
           </div>
+        </div>
+
+        <div class="card cashout-card" id="cashoutCard">
+          <div class="label">Gespart</div>
+          <div class="value" id="cashoutAmount">–</div>
+          <div class="sub" id="cashoutSub">seit Start</div>
         </div>
       </div>
     </div>
@@ -417,6 +461,17 @@
   </div>
 </div>
 
+<div class="overlay" id="payoutOverlay">
+  <div class="sheet">
+    <h3>Auszahlungen</h3>
+    <div class="payout-list" id="payoutList"></div>
+    <div class="payout-summary" id="payoutSummary"></div>
+    <div class="sheet-actions">
+      <button class="btn close" id="payoutClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -426,6 +481,10 @@
 
   let settings = { cigsPerPack: 20, pricePerPack: 8.00, goalPacks: 1, baselinePacks: 2, wakeTime: '07:00', sleepTime: '23:30' };
   let entries = []; // {ts: iso string, backfilled?: bool}
+  let lastCashout = null; // ISO string, null = never cashed out (use first entry / now as start)
+  let cashoutHistory = []; // [{ts, amount}]
+  const LS_CASHOUT = 'rauchprotokoll:lastCashout';
+  const LS_CASHOUT_HISTORY = 'rauchprotokoll:cashoutHistory';
 
   const $ = id => document.getElementById(id);
   const pad = n => String(n).padStart(2,'0');
@@ -461,6 +520,14 @@
       const e = localStorage.getItem(LS_ENTRIES);
       if (e) entries = JSON.parse(e);
     }catch(e){ entries = []; }
+    try{
+      const c = localStorage.getItem(LS_CASHOUT);
+      if (c) lastCashout = c;
+    }catch(e){}
+    try{
+      const h = localStorage.getItem(LS_CASHOUT_HISTORY);
+      if (h) cashoutHistory = JSON.parse(h);
+    }catch(e){ cashoutHistory = []; }
     render();
     refreshIcons();
     requestAnimationFrame(() => fitToAwakeRange());
@@ -509,18 +576,20 @@
   }
 
   function pricePerCig(){ return settings.pricePerPack / settings.cigsPerPack; }
-  function computeSavedTotal(){
-    if (entries.length === 0) return 0;
+
+  function computeSavedSince(sinceDate){
     const todayStr = todayKeyStr();
-    const sorted = [...entries].sort((a,b)=> new Date(a.ts) - new Date(b.ts));
-    const firstDay = new Date(sorted[0].ts); firstDay.setHours(0,0,0,0);
+    const since = new Date(sinceDate); since.setHours(0,0,0,0);
     const today = new Date(); today.setHours(0,0,0,0);
-    const daysTrackedTotal = Math.round((today - firstDay) / 86400000) + 1;
+    const daysTrackedTotal = Math.max(Math.round((today - since) / 86400000) + 1, 1);
     const pastDays = Math.max(daysTrackedTotal - 1, 0);
     const baselineCigs = settings.baselinePacks * settings.cigsPerPack;
 
-    const pastCount = entries.filter(e => todayKeyStr(new Date(e.ts)) !== todayStr).length;
-    const todayCount = entries.length - pastCount;
+    const pastCount = entries.filter(e => {
+      const ts = new Date(e.ts);
+      return todayKeyStr(ts) !== todayStr && ts >= since;
+    }).length;
+    const todayCount = entriesForDay(todayStr).length;
 
     // complete past days: full baseline each
     const pastSaved = Math.max(pastDays * baselineCigs - pastCount, 0) * pricePerCig();
@@ -535,6 +604,12 @@
     const todaySaved = Math.max(expectedToday - todayCount, 0) * pricePerCig();
 
     return pastSaved + todaySaved;
+  }
+
+  function computeSavedTotal(){
+    if (entries.length === 0) return 0;
+    const sorted = [...entries].sort((a,b)=> new Date(a.ts) - new Date(b.ts));
+    return computeSavedSince(sorted[0].ts);
   }
 
   function computeSavedPerMonth(){
@@ -723,6 +798,7 @@
     $('savedTotal').textContent = fmtEUR(computeSavedTotal());
     const savedMonth = computeSavedPerMonth();
     $('savedMonth').textContent = savedMonth == null ? '–' : fmtEUR(savedMonth);
+    renderCashoutCard();
 
     if (calViewMode === 'grid') renderCalendar(); else renderCalBars();
   }
@@ -978,6 +1054,102 @@
   setInterval(() => { render(); }, 30000); // every 30s: cheap (no zoom/scroll reset)
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) render();
+  });
+
+  // ---- cashout card (test) ----
+  function getCashoutSince(){
+    if (lastCashout) return new Date(lastCashout);
+    if (entries.length){
+      const sorted = [...entries].sort((a,b)=> new Date(a.ts) - new Date(b.ts));
+      return new Date(sorted[0].ts);
+    }
+    return new Date();
+  }
+  function renderCashoutCard(){
+    const since = getCashoutSince();
+    const sinceMid = new Date(since); sinceMid.setHours(0,0,0,0);
+    const todayMid = new Date(); todayMid.setHours(0,0,0,0);
+    const daysSince = Math.round((todayMid - sinceMid) / 86400000);
+    const amount = entries.length ? computeSavedSince(since) : 0;
+    const ready = daysSince >= 7 && amount > 0;
+
+    $('cashoutAmount').textContent = fmtEUR(amount);
+    $('cashoutCard').classList.toggle('ready', ready);
+    $('cashoutSub').textContent = ready
+      ? 'Bereit zum Abholen — antippen!'
+      : (daysSince <= 0 ? 'seit heute' : (7 - daysSince) + (7 - daysSince === 1 ? ' Tag bis Auszahlung' : ' Tage bis Auszahlung'));
+  }
+  function fireConfetti(originEl){
+    const colors = ['#4F46E5','#3730A3','#4338CA','#6366F1','#818CF8','#A5B4FC'];
+    const rect = originEl.getBoundingClientRect();
+    const originX = rect.left + rect.width/2;
+    const originY = rect.top + rect.height/2;
+    const container = document.createElement('div');
+    container.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:100;overflow:hidden;';
+    document.body.appendChild(container);
+    for (let i=0; i<80; i++){
+      const el = document.createElement('div');
+      const color = colors[Math.floor(Math.random()*colors.length)];
+      const w = 6 + Math.random()*6, h = w*0.4;
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 100 + Math.random()*260;
+      const tx = Math.round(Math.cos(angle) * distance);
+      const ty = Math.round(Math.sin(angle) * distance);
+      const duration = (0.7 + Math.random()*0.6).toFixed(2);
+      const delay = (Math.random()*0.12).toFixed(2);
+      const rotate = Math.round((Math.random()-0.5) * 900);
+      el.className = 'confetti-piece';
+      el.style.left = originX + 'px';
+      el.style.top = originY + 'px';
+      el.style.width = w + 'px';
+      el.style.height = h + 'px';
+      el.style.background = color;
+      el.style.setProperty('--tx', tx + 'px');
+      el.style.setProperty('--ty', ty + 'px');
+      el.style.setProperty('--rot', rotate + 'deg');
+      el.style.animation = `confettiBurst ${duration}s cubic-bezier(0.15,0.6,0.3,1) ${delay}s forwards`;
+      container.appendChild(el);
+    }
+    setTimeout(() => container.remove(), 1700);
+  }
+  function saveCashoutHistory(){
+    try{ localStorage.setItem(LS_CASHOUT_HISTORY, JSON.stringify(cashoutHistory)); }
+    catch(e){ showToast('Speichern fehlgeschlagen — privater Modus?'); }
+  }
+  function openPayoutModal(){
+    const sorted = [...cashoutHistory].sort((a,b)=> new Date(b.ts) - new Date(a.ts));
+    const listEl = $('payoutList');
+    if (sorted.length === 0){
+      listEl.innerHTML = '<div class="payout-empty">Noch keine Auszahlungen.</div>';
+    } else {
+      listEl.innerHTML = sorted.map(p => {
+        const d = new Date(p.ts);
+        const dateStr = pad(d.getDate())+'.'+pad(d.getMonth()+1)+'.'+d.getFullYear();
+        return `<div class="payout-item"><span class="pdate">${dateStr}</span><span class="pamount">${fmtEUR(p.amount)}</span></div>`;
+      }).join('');
+    }
+    const total = cashoutHistory.reduce((s,p)=> s + p.amount, 0);
+    $('payoutSummary').innerHTML =
+      `<span>${cashoutHistory.length} Auszahlung${cashoutHistory.length===1?'':'en'}</span><span>Gesamt: ${fmtEUR(total)}</span>`;
+    $('payoutOverlay').classList.add('open');
+  }
+  $('payoutClose').addEventListener('click', () => $('payoutOverlay').classList.remove('open'));
+  $('payoutOverlay').addEventListener('click', (e) => { if (e.target.id === 'payoutOverlay') $('payoutOverlay').classList.remove('open'); });
+
+  $('cashoutCard').addEventListener('click', (ev) => {
+    if (!$('cashoutCard').classList.contains('ready')){
+      openPayoutModal();
+      return;
+    }
+    const amount = computeSavedSince(getCashoutSince());
+    fireConfetti(ev.currentTarget);
+    lastCashout = new Date().toISOString();
+    cashoutHistory.push({ ts: lastCashout, amount });
+    try{ localStorage.setItem(LS_CASHOUT, lastCashout); }
+    catch(e){ showToast('Speichern fehlgeschlagen — privater Modus?'); }
+    saveCashoutHistory();
+    renderCashoutCard();
+    showToast('Ausgezahlt — Zähler beginnt neu');
   });
 
   loadAll();
