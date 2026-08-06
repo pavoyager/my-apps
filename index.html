@@ -292,19 +292,19 @@
             <div class="card stat">
               <div class="label">Hochrechnung</div>
               <div class="value" id="projection">–</div>
-              <div class="sub">geschätzt bis Schlafenszeit</div>
+              <div class="sub" id="projectionSub">Vortag: –</div>
             </div>
           </div>
           <div class="statrow">
             <div class="card stat">
-              <div class="label">vs. Gestern</div>
-              <div class="value" id="vsYesterday">–</div>
-              <div class="sub" id="vsYesterdaySub">um diese Uhrzeit</div>
-            </div>
-            <div class="card stat">
-              <div class="label">Gesamt</div>
+              <div class="label">Ersparnis gesamt</div>
               <div class="value" id="savedTotal">–</div>
               <div class="sub">gespart seit Start</div>
+            </div>
+            <div class="card stat">
+              <div class="label">Ersparnis/Monat</div>
+              <div class="value" id="savedMonth">–</div>
+              <div class="sub">hochgerechnet</div>
             </div>
           </div>
         </div>
@@ -508,17 +508,6 @@
     return Math.round(dayEntries.length + rate * remaining);
   }
 
-  function computeVsYesterday(todayEntries){
-    const now = new Date();
-    const yesterday = new Date(now); yesterday.setDate(yesterday.getDate()-1);
-    const yEntries = entriesForDay(todayKeyStr(yesterday));
-    if (yEntries.length === 0) return null;
-    const cutoff = new Date(yesterday);
-    cutoff.setHours(now.getHours(), now.getMinutes(), 59, 999);
-    const yCountAtSameTime = yEntries.filter(e => new Date(e.ts) <= cutoff).length;
-    return { diff: todayEntries.length - yCountAtSameTime };
-  }
-
   function pricePerCig(){ return settings.pricePerPack / settings.cigsPerPack; }
   function computeSavedTotal(){
     if (entries.length === 0) return 0;
@@ -546,6 +535,38 @@
     const todaySaved = Math.max(expectedToday - todayCount, 0) * pricePerCig();
 
     return pastSaved + todaySaved;
+  }
+
+  function computeSavedPerMonth(){
+    if (entries.length === 0) return null;
+    const sorted = [...entries].sort((a,b)=> new Date(a.ts) - new Date(b.ts));
+    const firstDay = new Date(sorted[0].ts); firstDay.setHours(0,0,0,0);
+    const today = new Date(); today.setHours(0,0,0,0);
+    const daysTrackedTotal = Math.round((today - firstDay) / 86400000) + 1;
+
+    const now = new Date();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+    const windowDays = Math.min(daysTrackedTotal, daysInMonth);
+
+    const baselineCigs = settings.baselinePacks * settings.cigsPerPack;
+    const wakeH = parseHM(settings.wakeTime), sleepH = parseHM(settings.sleepTime);
+    const wakingSpan = Math.max(sleepH - wakeH, 0.5);
+    const nowH = now.getHours() + now.getMinutes()/60;
+    const elapsedWaking = Math.min(Math.max(nowH - wakeH, 0), wakingSpan);
+
+    let windowSavedCigs = 0;
+    for (let i = 0; i < windowDays; i++){
+      const d = new Date(today); d.setDate(d.getDate() - i);
+      const count = entriesForDay(todayKeyStr(d)).length;
+      if (i === 0){
+        const expectedToday = baselineCigs * (elapsedWaking / wakingSpan);
+        windowSavedCigs += Math.max(expectedToday - count, 0);
+      } else {
+        windowSavedCigs += Math.max(baselineCigs - count, 0);
+      }
+    }
+    const avgDailySavedCigs = windowSavedCigs / windowDays;
+    return avgDailySavedCigs * daysInMonth * pricePerCig();
   }
 
   let dayOffset = 0; // 0 = window ends today; each step shifts by 1 day (can't go into the future)
@@ -695,19 +716,13 @@
     const proj = computeProjection(todayEntries);
     $('projection').textContent = proj == null ? '–' : proj + ' Stk.';
 
-    const vs = computeVsYesterday(todayEntries);
-    const vsEl = $('vsYesterday');
-    if (vs == null){
-      vsEl.textContent = '–'; vsEl.className = 'value';
-      $('vsYesterdaySub').textContent = 'keine Daten gestern';
-    } else {
-      const sign = vs.diff <= 0 ? '−' : '+';
-      vsEl.textContent = (vs.diff===0? '±0' : sign + Math.abs(vs.diff));
-      vsEl.className = 'value';
-      $('vsYesterdaySub').textContent = vs.diff <= 0 ? 'weniger als gestern' : 'mehr als gestern';
-    }
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+    const yEntries = entriesForDay(todayKeyStr(yesterday));
+    $('projectionSub').textContent = yEntries.length ? ('Vortag: ' + yEntries.length + ' Stk.') : 'Vortag: keine Daten';
 
     $('savedTotal').textContent = fmtEUR(computeSavedTotal());
+    const savedMonth = computeSavedPerMonth();
+    $('savedMonth').textContent = savedMonth == null ? '–' : fmtEUR(savedMonth);
 
     if (calViewMode === 'grid') renderCalendar(); else renderCalBars();
   }
