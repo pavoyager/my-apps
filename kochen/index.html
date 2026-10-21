@@ -1,11 +1,21 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Kochen</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#F1F5F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1511" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kochen">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..700&display=swap">
 <style>
-/* Layout concept: einspaltige Handy-App (max 520px) mit Tab-Leiste unten. Der Such-Screen ist ein Regler-Panel, darunter sortieren sich die Rezepte live nach Treffer. */
+/* Layout: einspaltige Handy-App (max 520px) mit Tab-Leiste unten. Der Such-Screen ist ein Regler-Panel, darunter sortieren sich die Rezepte live nach Treffer. */
 :root {
+  color-scheme: light;
   --bg: #F1F5F0;
   --surface: #FFFFFF;
   --surface-2: #E6EDE6;
@@ -40,33 +50,38 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
+img { max-width: 100%; }
+html { background: var(--bg); }
 body {
+  margin: 0;
   background: var(--bg); color: var(--ink);
   font-family: var(--font-body); font-size: 15px; line-height: 1.45;
-  padding-block: 14px 120px;
+  padding-top: calc(14px + env(safe-area-inset-top, 0px));
+  padding-bottom: 120px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   -webkit-text-size-adjust: 100%;
 }
 button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:disabled { opacity: .6; cursor: default; }
 :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; }
 p { margin: 0; }
+form { margin: 0; display: contents; }
 .app { max-width: 520px; margin-inline: auto; }
 .screen { display: flex; flex-direction: column; gap: 18px; }
 
-/* Kopfzeile */
 .top { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
 .mark { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 800; font-size: 21px; letter-spacing: -.02em; }
 .mark svg { color: var(--forest); }
-.me { width: 42px; height: 42px; border-radius: 50%; border: 0; background: var(--surface-2); font-weight: 600; font-size: 13px; }
+.me { width: 42px; height: 42px; border-radius: 50%; border: 0; background: var(--surface-2); font-weight: 700; font-size: 15px; text-transform: uppercase; }
 .h1 { font-size: 32px; line-height: 1.05; font-weight: 700; letter-spacing: -.025em; }
 .h1.sm { font-size: 28px; }
 .lead { color: var(--muted); max-width: 40ch; }
 .by { color: var(--muted); margin-top: 4px; }
 .back { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; min-height: 44px; padding: 0 12px 0 6px; border: 0; background: none; font-weight: 600; color: var(--forest); }
 
-/* Panel mit Reglern */
 .panel { background: var(--surface); border-radius: 22px; padding: 4px 18px; }
 .ctl { padding: 16px 0 14px; border-bottom: 1px solid var(--line); }
 .ctl:last-child { border-bottom: 0; }
@@ -99,14 +114,13 @@ p { margin: 0; }
 .newo .btn { flex: none; min-height: 48px; }
 .hint { margin-top: 8px; font-size: 13px; color: var(--muted); min-height: 1.4em; }
 
-/* Ergebnisse */
 .res-h { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 4px; }
 .res-h h2 { font-size: 22px; letter-spacing: -.02em; }
 .res-h span { color: var(--muted); font-size: 13px; }
 .row { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 14px; width: 100%; padding: 14px 0; border: 0; border-bottom: 1px solid var(--line); background: none; text-align: left; }
 .rb { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .rt { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-.rtitle { font-family: var(--font-display); font-weight: 700; font-size: 17px; line-height: 1.2; letter-spacing: -.01em; }
+.rtitle { font-family: var(--font-display); font-weight: 700; font-size: 17px; line-height: 1.2; letter-spacing: -.01em; overflow-wrap: anywhere; }
 .rmeta { font-size: 13px; color: var(--muted); }
 .pill { font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .pill.hi { background: var(--accent); color: var(--accent-ink); }
@@ -115,21 +129,19 @@ p { margin: 0; }
 .chip.vegan { background: var(--vegan-bg); color: var(--vegan); }
 .chip.veggie { background: var(--veggie-bg); color: var(--veggie); }
 .chip.fleisch { background: var(--fleisch-bg); color: var(--fleisch); }
-.empty { padding: 24px 0; color: var(--muted); }
+.empty { padding: 24px 0; color: var(--muted); display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
 
 .pic { position: relative; overflow: hidden; border-radius: 16px; aspect-ratio: 1; background: var(--surface-2); }
 .pic svg, .pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .pic.big { aspect-ratio: 16 / 10; border-radius: 24px; }
 .pic.wide { aspect-ratio: 4 / 3; }
 
-/* Sammlung */
 .inp { width: 100%; min-height: 48px; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); font: inherit; font-size: 16px; }
 textarea.inp { resize: vertical; min-height: 64px; }
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 14px; }
 .tile { display: flex; flex-direction: column; gap: 8px; padding: 0; border: 0; background: none; text-align: left; min-width: 0; }
 .tile .rtitle { font-size: 16px; }
 
-/* Detail */
 .tagsum { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
 .trow { display: grid; grid-template-columns: 108px auto minmax(0, 1fr); gap: 12px; align-items: center; font-size: 14px; }
 .trow .tl { color: var(--muted); }
@@ -144,14 +156,15 @@ textarea.inp { resize: vertical; min-height: 64px; }
 .stepper button { width: 44px; height: 44px; border: 0; border-radius: 12px; background: var(--surface); font-size: 22px; font-weight: 600; line-height: 1; }
 .stepper span { min-width: 92px; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
 .ing { list-style: none; margin: 0; padding: 0; }
-.ing li { display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); }
+.ing li { display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
 .ing .am { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
 .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 16px; counter-reset: s; }
-.step { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; align-items: start; counter-increment: s; }
+.step { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; align-items: start; counter-increment: s; overflow-wrap: anywhere; }
 .step::before { content: counter(s); width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: var(--bg); display: grid; place-items: center; font-weight: 700; font-size: 14px; }
-.step > :not(.x) { padding-top: 3px; }
+.step > span { padding-top: 3px; }
+.own { display: flex; flex-direction: column; gap: 10px; padding-top: 6px; }
+.own-row { display: flex; gap: 10px; flex-wrap: wrap; }
 
-/* Neues Rezept */
 .card { background: var(--surface); border-radius: 22px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
 .card h2 { font-size: 20px; letter-spacing: -.015em; }
 .how { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px; counter-reset: h; }
@@ -160,6 +173,7 @@ textarea.inp { resize: vertical; min-height: 64px; }
 .how .b { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding-top: 3px; }
 .btn { min-height: 52px; padding: 0 20px; border: 0; border-radius: 16px; background: var(--accent); color: var(--accent-ink); font-family: var(--font-display); font-weight: 700; font-size: 17px; width: 100%; }
 .btn.ghost { background: transparent; border: 1.5px solid var(--line); color: var(--ink); font-family: var(--font-body); font-size: 15px; font-weight: 600; min-height: 46px; }
+.btn.danger { background: var(--err); color: var(--bg); font-family: var(--font-body); font-size: 15px; min-height: 46px; }
 .btn.inline { width: auto; align-self: flex-start; }
 .link { align-self: flex-start; min-height: 40px; padding: 0; border: 0; background: none; color: var(--forest); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 .msg { font-size: 14px; }
@@ -174,13 +188,14 @@ details summary { cursor: pointer; font-weight: 600; color: var(--forest); min-h
 .ph { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px; }
 .vh { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; clip: rect(0 0 0 0); }
 .irow { display: grid; grid-template-columns: 66px 80px minmax(0, 1fr) 40px; gap: 8px; margin-bottom: 8px; }
-.irow .inp, .irow select { min-width: 0; padding-inline: 10px; }
+.irow .inp { min-width: 0; padding-inline: 10px; }
 .x { width: 40px; height: 48px; border: 0; background: none; color: var(--muted); display: grid; place-items: center; padding: 0; }
 .srow { display: grid; grid-template-columns: 30px minmax(0, 1fr) 40px; gap: 8px; align-items: start; margin-bottom: 10px; counter-increment: s; }
 .srow::before { content: counter(s); margin-top: 9px; width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: var(--bg); display: grid; place-items: center; font-weight: 700; font-size: 14px; }
 .srows { counter-reset: s; }
 
-/* Tab-Leiste, Hinweise */
+.login { min-height: calc(100dvh - 60px); justify-content: center; }
+
 .tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--surface); border-top: 1px solid var(--line);
   padding: 8px max(16px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
 .tabs-in { max-width: 520px; margin: 0 auto; display: flex; }
@@ -192,18 +207,25 @@ details summary { cursor: pointer; font-weight: 600; color: var(--forest); min-h
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(86px + env(safe-area-inset-bottom, 0px)); z-index: 30; width: max-content; max-width: calc(100vw - 40px); padding: 12px 18px; border-radius: 14px; background: var(--ink); color: var(--bg); font-weight: 600; text-align: center; }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
 </style>
-
+</head>
+<body>
 <div class="app" id="app"></div>
-
-<nav class="tabs" aria-label="Hauptmenü">
-  <div class="tabs-in" id="tabs"></div>
-</nav>
+<nav class="tabs" id="tabsNav" aria-label="Hauptmenü" hidden><div class="tabs-in" id="tabs"></div></nav>
 <button class="jump" id="jump" type="button" data-act="jump" hidden></button>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
+/* ---------- Verbindung ---------- */
+const SB_URL = 'https://jlaewbjfmsxyfcsvhyfz.supabase.co';
+const SB_KEY = 'sb_publishable_YXlEeH0I8Bgrh2DEPtD4Jg_SB5GwD1E';   // öffentlich, geschützt durch die Zugriffsregeln in der Datenbank
+const EMAIL_DOMAIN = 'kochen.app';                                 // Login-Name + @kochen.app ergibt die interne E-Mail
+let sb = null;
+try { sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { storageKey: 'kochen-auth', persistSession: true, autoRefreshToken: true } }); } catch (e) { sb = null; }
+
+/* ---------- Helfer ---------- */
 const $ = s => document.querySelector(s);
-const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ic = (p, s = 22) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const I = {
   search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
@@ -215,71 +237,71 @@ const I = {
   x: '<path d="M6 6l12 12M18 6L6 18"/>',
   pot: '<path d="M5 10h14v7a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z"/><path d="M3 10h18M9 6c0-1 1-1.5 1-2.5M14 6c0-1 1-1.5 1-2.5"/>'
 };
+const uuid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+const hash = s => { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); };
 
-const ORIGINS = ['Deutsch', 'Italienisch', 'Mediterran', 'Asiatisch', 'Orientalisch', 'Mexikanisch'];
+const BASE_ORIGINS = ['Deutsch', 'Italienisch', 'Mediterran', 'Asiatisch', 'Orientalisch', 'Mexikanisch'];
+const ORIGINS = [...BASE_ORIGINS];
 const DIETS = { vegan: 'Vegan', veggie: 'Veggie', fleisch: 'Mit Fleisch' };
 const UNITS = ['', 'g', 'kg', 'ml', 'l', 'EL', 'TL', 'Stk', 'Bund', 'Dose', 'Prise'];
 const DIM = {
   aufwand: { label: 'Aufwand', sh: 'Aufwand', words: ['Blitzschnell', 'Entspannt', 'Normal', 'Aufwendig', 'Großprojekt'], ends: ['Unter 20 Min', 'Halber Tag'] },
   zutaten: { label: 'Zutaten', sh: 'Zutaten', words: ['Nur Basics', 'Fast alles da', 'Ein paar Extras', 'Einkaufsliste', 'Spezialladen'], ends: ['Basics', 'Speziell'] },
-  deftig:  { label: 'Deftig oder leicht', sh: 'Deftig – leicht', words: ['Sehr deftig', 'Deftig', 'Ausgewogen', 'Eher leicht', 'Federleicht'], ends: ['Deftig', 'Leicht'] }
+  deftig:  { label: 'Deftig oder leicht', sh: 'Deftig – leicht', words: ['Sehr deftig', 'Deftig', 'Ausgewogen', 'Eher leicht', 'Federleicht'], ends: ['Deftig', 'Leicht'] },
+  gesund:  { label: 'Gesund oder ungesund', sh: 'Gesundheit', words: ['Sehr gesund', 'Eher gesund', 'Normal', 'Eher ungesund', 'Ungesund'], ends: ['Gesund', 'Ungesund'] }
 };
+const KEYS = ['aufwand', 'zutaten', 'deftig', 'gesund'];
 
-/* Beispieldaten: so könnten Rezepte aus eurer Runde aussehen. ing = [Menge, Einheit, Name] */
-const recipes = [
-  { id: 'r1', title: 'Spaghetti aglio e olio', author: 'Mira', portions: 2, hue: 48,
-    ing: [[200,'g','Spaghetti'],[4,'','Knoblauchzehen'],[6,'EL','Olivenöl'],[1,'TL','Chiliflocken'],[1,'Bund','Petersilie'],[null,'','Salz']],
-    steps: ['Spaghetti in Salzwasser bissfest kochen. Eine Tasse Nudelwasser aufheben.','Knoblauch in Scheiben schneiden und mit den Chiliflocken im Olivenöl goldgelb braten.','Nudeln mit etwas Nudelwasser in die Pfanne geben und schwenken.','Petersilie hacken, untermischen, fertig.'],
-    tags: { aufwand: 1, zutaten: 1, deftig: 3, herkunft: 'Italienisch', diet: 'vegan' } },
-  { id: 'r2', title: 'Shakshuka', author: 'Tom', portions: 2, hue: 8,
-    ing: [[1,'Stk','Zwiebel'],[2,'Stk','Paprika'],[1,'Dose','gehackte Tomaten'],[1,'TL','Kreuzkümmel'],[1,'TL','Paprikapulver'],[4,'Stk','Eier'],[null,'','Salz und Pfeffer']],
-    steps: ['Zwiebel und Paprika würfeln und in Öl anbraten.','Gewürze und Tomaten zugeben, 10 Minuten köcheln lassen.','Mulden in die Sauce drücken und die Eier hineingleiten lassen.','Deckel drauf und 6 bis 8 Minuten stocken lassen. Mit Brot essen.'],
-    tags: { aufwand: 2, zutaten: 2, deftig: 3, herkunft: 'Orientalisch', diet: 'veggie' } },
-  { id: 'r3', title: 'Rote Linsen-Dal mit Reis', author: 'Lena', portions: 4, hue: 28,
-    ing: [[250,'g','rote Linsen'],[1,'Stk','Zwiebel'],[2,'Stk','Knoblauchzehen'],[1,'EL','Currypulver'],[400,'ml','Kokosmilch'],[300,'ml','Wasser'],[250,'g','Basmatireis']],
-    steps: ['Zwiebel und Knoblauch in Öl anschwitzen, Curry kurz mitrösten.','Linsen, Kokosmilch und Wasser zugeben.','15 bis 20 Minuten köcheln, bis alles cremig ist. Reis nach Packung kochen.','Mit Salz abschmecken und zusammen servieren.'],
-    tags: { aufwand: 2, zutaten: 2, deftig: 2, herkunft: 'Asiatisch', diet: 'vegan' } },
-  { id: 'r4', title: 'Käsespätzle', author: 'Jonas', portions: 4, hue: 42,
-    ing: [[500,'g','Spätzle (Packung)'],[250,'g','Bergkäse'],[3,'Stk','Zwiebeln'],[2,'EL','Butter'],[1,'Bund','Schnittlauch']],
-    steps: ['Zwiebeln in Ringe schneiden und in Butter langsam goldbraun braten.','Spätzle in Salzwasser kurz erhitzen und abgießen.','Schichtweise mit geriebenem Käse in eine Pfanne geben, bis der Käse schmilzt.','Zwiebeln und Schnittlauch obendrauf.'],
-    tags: { aufwand: 2, zutaten: 1, deftig: 1, herkunft: 'Deutsch', diet: 'veggie' } },
-  { id: 'r5', title: 'Rindergulasch', author: 'Ben', portions: 4, hue: 14,
-    ing: [[800,'g','Rindergulasch'],[4,'Stk','Zwiebeln'],[3,'EL','Paprikapulver'],[2,'EL','Tomatenmark'],[500,'ml','Rinderbrühe'],[2,'Stk','Paprika']],
-    steps: ['Fleisch in Öl scharf anbraten und herausnehmen.','Zwiebeln anschwitzen, Tomatenmark und Paprikapulver kurz mitrösten.','Fleisch und Brühe zugeben, 90 Minuten bei kleiner Hitze schmoren.','Paprika würfeln und die letzten 20 Minuten mitgaren.','Mit Nudeln oder Kartoffeln servieren.'],
-    tags: { aufwand: 4, zutaten: 2, deftig: 1, herkunft: 'Deutsch', diet: 'fleisch' } },
-  { id: 'r6', title: 'Gemüse-Pad-Thai', author: 'Sophie', portions: 2, hue: 92,
-    ing: [[200,'g','Reisbandnudeln'],[1,'Stk','Karotte'],[1,'Stk','Paprika'],[100,'g','Tofu'],[3,'EL','Sojasauce'],[1,'EL','Tamarindenpaste'],[2,'EL','Erdnüsse'],[1,'Stk','Limette']],
-    steps: ['Nudeln nach Packung einweichen.','Tofu in Würfeln knusprig braten und herausnehmen.','Gemüse in Streifen im Wok anbraten.','Nudeln, Sojasauce und Tamarinde zugeben und schwenken.','Mit gehackten Erdnüssen und Limette servieren.'],
-    tags: { aufwand: 3, zutaten: 4, deftig: 3, herkunft: 'Asiatisch', diet: 'vegan' } },
-  { id: 'r7', title: 'Chili sin Carne', author: 'Tom', portions: 4, hue: 2,
-    ing: [[1,'Stk','Zwiebel'],[1,'Stk','Paprika'],[2,'Dose','Kidneybohnen'],[1,'Dose','Mais'],[1,'Dose','gehackte Tomaten'],[2,'TL','Chilipulver'],[1,'TL','Kreuzkümmel']],
-    steps: ['Zwiebel und Paprika in Öl anbraten.','Gewürze kurz mitrösten.','Bohnen, Mais und Tomaten zugeben.','25 Minuten köcheln lassen und abschmecken.'],
-    tags: { aufwand: 2, zutaten: 2, deftig: 2, herkunft: 'Mexikanisch', diet: 'vegan' } },
-  { id: 'r8', title: 'Griechischer Bauernsalat', author: 'Mira', portions: 2, hue: 130,
-    ing: [[4,'Stk','Tomaten'],[1,'Stk','Gurke'],[1,'Stk','rote Zwiebel'],[200,'g','Feta'],[12,'Stk','Oliven'],[3,'EL','Olivenöl'],[1,'TL','Oregano']],
-    steps: ['Tomaten und Gurke in grobe Stücke schneiden, Zwiebel in Ringe.','Alles mit den Oliven mischen und den Feta in einem Stück darauflegen.','Mit Olivenöl und Oregano beträufeln.'],
-    tags: { aufwand: 1, zutaten: 1, deftig: 5, herkunft: 'Mediterran', diet: 'veggie' } },
-  { id: 'r9', title: 'Ofenlachs mit Gemüse', author: 'Lena', portions: 2, hue: 16,
-    ing: [[2,'Stk','Lachsfilets'],[400,'g','Kartoffeln'],[1,'Stk','Zucchini'],[200,'g','Kirschtomaten'],[3,'EL','Olivenöl'],[1,'Stk','Zitrone']],
-    steps: ['Ofen auf 200 °C vorheizen.','Kartoffeln in Spalten schneiden, mit Öl 20 Minuten backen.','Zucchini und Tomaten dazugeben, den Lachs obenauf legen.','15 Minuten backen und mit Zitrone beträufeln.'],
-    tags: { aufwand: 2, zutaten: 2, deftig: 4, herkunft: 'Mediterran', diet: 'fleisch' } },
-  { id: 'r10', title: 'Rinderbraten mit Rotkohl', author: 'Ben', portions: 6, hue: 322,
-    ing: [[1.2,'kg','Rinderbraten'],[1,'Stk','Rotkohl (klein)'],[2,'Stk','Äpfel'],[3,'Stk','Zwiebeln'],[500,'ml','Rotwein'],[500,'ml','Brühe']],
-    steps: ['Braten rundum scharf anbraten.','Zwiebeln, Rotwein und Brühe zugeben und 2,5 Stunden bei 160 °C im Ofen schmoren.','Rotkohl hobeln und mit Äpfeln und Zwiebeln 1 Stunde köcheln.','Sauce abschmecken, Braten aufschneiden.'],
-    tags: { aufwand: 5, zutaten: 3, deftig: 1, herkunft: 'Deutsch', diet: 'fleisch' } },
-  { id: 'r11', title: 'Couscous-Salat mit Kichererbsen', author: 'Sophie', portions: 4, hue: 62,
-    ing: [[200,'g','Couscous'],[250,'ml','heißes Wasser'],[1,'Dose','Kichererbsen'],[1,'Stk','Gurke'],[1,'Stk','Zitrone'],[3,'EL','Olivenöl'],[1,'Bund','Minze']],
-    steps: ['Couscous mit heißem Wasser übergießen und 5 Minuten quellen lassen.','Gurke würfeln, Minze hacken.','Alles mit Kichererbsen, Zitronensaft und Öl mischen.'],
-    tags: { aufwand: 1, zutaten: 2, deftig: 4, herkunft: 'Orientalisch', diet: 'vegan' } },
-  { id: 'r12', title: 'Spaghetti Carbonara', author: 'Jonas', portions: 2, hue: 38,
-    ing: [[200,'g','Spaghetti'],[100,'g','Guanciale oder Speck'],[3,'Stk','Eier'],[50,'g','Pecorino'],[null,'','schwarzer Pfeffer']],
-    steps: ['Speck in der Pfanne knusprig auslassen.','Eier mit Käse und Pfeffer verrühren.','Spaghetti kochen und mit etwas Nudelwasser zum Speck geben.','Pfanne vom Herd nehmen, Eiermischung unterrühren, bis es cremig wird.'],
-    tags: { aufwand: 2, zutaten: 2, deftig: 2, herkunft: 'Italienisch', diet: 'fleisch' } }
-];
-recipes.forEach((r, i) => { r.seed = 101 + i * 37; });
+/* ---------- Zustand ---------- */
+let recipes = [];
 const byId = id => recipes.find(r => r.id === id);
+const S = { user: null, tab: 'login', prev: 'search', scrollY: 0, detailId: null, text: '', count: 0,
+  loading: false, loadErr: '', saving: false, confirmDel: null, lastLoad: 0,
+  q: { aufwand: { on: true, v: 2 }, zutaten: { on: true, v: 2 }, deftig: { on: true, v: 2 }, gesund: { on: false, v: 3 }, herkunft: [], diet: 'egal' } };
+let D = { portions: 2 };
+const blankIng = () => ({ a: '', u: '', n: '' });
+const newForm = () => ({ title: '', portions: 2, ings: [blankIng(), blankIng()], steps: ['', ''], photo: null, photoBlob: null, photoPath: null,
+  editId: null, addOrigin: false, ai: '', aiMsg: '', err: '', tags: { aufwand: 2, zutaten: 2, deftig: 3, gesund: 3, herkunft: 'Deutsch', diet: 'veggie' } });
+let F = newForm();
 
-/* Platzhalter-Bild: ein Teller in der Farbe des Gerichts */
+function rebuildOrigins() {
+  const seen = new Map(BASE_ORIGINS.map(o => [o.toLowerCase(), o]));
+  const add = h => { h = String(h || '').trim(); if (h && !seen.has(h.toLowerCase())) seen.set(h.toLowerCase(), h); };
+  recipes.forEach(r => add(r.tags.herkunft)); add(F.tags.herkunft); S.q.herkunft.forEach(add);
+  const extra = [...seen.values()].filter(o => !BASE_ORIGINS.includes(o)).sort((a, b) => a.localeCompare(b, 'de'));
+  ORIGINS.length = 0; ORIGINS.push(...BASE_ORIGINS, ...extra);
+}
+
+/* ---------- Daten laden ---------- */
+function fromRow(x, names) {
+  return {
+    id: x.id, title: x.title, authorId: x.author_id, author: names[x.author_id] || 'Unbekannt', portions: x.portions,
+    ing: (x.ingredients || []).map(i => [i.menge ?? null, i.einheit || '', i.name || '']), steps: x.steps || [],
+    photoPath: x.photo_path || null,
+    photo: x.photo_path ? sb.storage.from('recipe-photos').getPublicUrl(x.photo_path).data.publicUrl : null,
+    hue: hash(x.id) % 360, seed: hash(x.id) % 9973 + 1,
+    tags: { aufwand: x.aufwand, zutaten: x.zutaten, deftig: x.deftig, gesund: x.gesund ?? 3, herkunft: x.herkunft, diet: x.ernaehrung }
+  };
+}
+async function loadRecipes() {
+  S.loading = true; S.loadErr = '';
+  try {
+    const [r, p] = await Promise.all([
+      sb.from('recipes').select('*').order('created_at', { ascending: false }),
+      sb.from('profiles').select('id,name')
+    ]);
+    if (r.error) throw r.error;
+    const names = {}; (p.data || []).forEach(x => { names[x.id] = x.name; });
+    recipes = (r.data || []).map(x => fromRow(x, names));
+    S.lastLoad = Date.now();
+  } catch (e) {
+    S.loadErr = 'Die Rezepte konnten nicht geladen werden. Prüf die Internetverbindung.';
+  }
+  S.loading = false;
+  rebuildOrigins();
+}
+
+/* ---------- Bilder ---------- */
 function rng(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 const plateCache = {};
 function plate(r) {
@@ -291,21 +313,12 @@ function plate(r) {
   }
   return plateCache[r.id] = `<svg viewBox="0 0 200 150" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Platzhalterbild"><rect width="200" height="150" fill="hsl(${r.hue} 34% 76%)"/><circle cx="100" cy="75" r="60" fill="hsl(0 0% 97%)"/><circle cx="100" cy="75" r="49" fill="hsl(${r.hue} 22% 90%)"/>${b}</svg>`;
 }
-const pic = r => r.photo ? `<img src="${r.photo}" alt="${esc(r.title)}">` : plate(r);
+const pic = r => r.photo ? `<img src="${esc(r.photo)}" alt="${esc(r.title)}" loading="lazy" decoding="async">` : plate(r);
 
-/* Zustand */
-const S = { tab: 'search', prev: 'search', scrollY: 0, detailId: null, text: '',
-  q: { aufwand: { on: true, v: 2 }, zutaten: { on: true, v: 2 }, deftig: { on: true, v: 2 }, herkunft: [], diet: 'egal' }, count: 0 };
-let D = { portions: 2 };
-const blankIng = () => ({ a: '', u: '', n: '' });
-const newForm = () => ({ title: '', portions: 2, ings: [blankIng(), blankIng()], steps: ['', ''], photo: null, ai: '', aiMsg: '', err: '',
-  tags: { aufwand: 2, zutaten: 2, deftig: 3, herkunft: 'Deutsch', diet: 'veggie' } });
-let F = newForm();
-
-/* Suche: Abstand pro Regler, Ernährung als harter Filter */
+/* ---------- Suche ---------- */
 function score(r) {
   const d = [];
-  for (const k of ['aufwand', 'zutaten', 'deftig']) if (S.q[k].on) d.push(Math.abs(r.tags[k] - S.q[k].v) / 4);
+  for (const k of KEYS) if (S.q[k].on) d.push(Math.abs(r.tags[k] - S.q[k].v) / 4);
   if (S.q.herkunft.length) d.push(S.q.herkunft.includes(r.tags.herkunft) ? 0 : 1);
   if (!d.length) return null;
   return Math.max(0, Math.round(100 * (1 - 1.5 * d.reduce((a, b) => a + b, 0) / d.length)));
@@ -318,12 +331,12 @@ function dietOK(r) {
   return r.tags.diet === 'fleisch';
 }
 
-/* Bausteine */
+/* ---------- Bausteine ---------- */
 function chips(r, all = true) {
-  return `<span class="chip ${r.tags.diet}">${DIETS[r.tags.diet]}</span><span class="chip">${esc(r.tags.herkunft)}</span>` + (all ? `<span class="chip">${DIM.aufwand.words[r.tags.aufwand - 1]}</span>` : '');
+  return `<span class="chip ${esc(r.tags.diet)}">${DIETS[r.tags.diet] || ''}</span><span class="chip">${esc(r.tags.herkunft)}</span>` + (all ? `<span class="chip">${DIM.aufwand.words[r.tags.aufwand - 1]}</span>` : '');
 }
 function row(r, s) {
-  return `<button class="row" type="button" data-act="open" data-id="${r.id}">
+  return `<button class="row" type="button" data-act="open" data-id="${esc(r.id)}">
     <div class="pic">${pic(r)}</div>
     <div class="rb">
       <div class="rt"><span class="rtitle">${esc(r.title)}</span>${s == null ? '' : `<span class="pill ${s >= 85 ? 'hi' : ''}">${s} %</span>`}</div>
@@ -332,7 +345,7 @@ function row(r, s) {
     </div></button>`;
 }
 function tile(r) {
-  return `<button class="tile" type="button" data-act="open" data-id="${r.id}"><div class="pic wide">${pic(r)}</div>
+  return `<button class="tile" type="button" data-act="open" data-id="${esc(r.id)}"><div class="pic wide">${pic(r)}</div>
     <div><div class="rtitle">${esc(r.title)}</div><div class="rmeta">von ${esc(r.author)}</div></div></button>`;
 }
 function ctl(k, scope, v, on = true) {
@@ -345,13 +358,29 @@ function ctl(k, scope, v, on = true) {
     <div class="ends"><span>${d.ends[0]}</span><span>${d.ends[1]}</span></div></div>`;
 }
 const paintRange = t => t.style.setProperty('--p', `calc(16px + (100% - 32px) * ${(t.value - 1) / 4})`);
-function topbar(withBack) {
-  return `<div class="top"><div class="mark">${ic(I.pot, 24)}Kochen</div><button class="me" type="button" data-act="go" data-to="login" aria-label="Konto">Du</button></div>`;
+function topbar() {
+  const n = S.user ? S.user.name : '';
+  return `<div class="top"><div class="mark">${ic(I.pot, 24)}Kochen</div><button class="me" type="button" data-act="go" data-to="account" aria-label="Konto von ${esc(n)}">${esc(n.charAt(0) || '?')}</button></div>`;
 }
 const originVal = () => !S.q.herkunft.length ? 'Egal' : S.q.herkunft.length <= 2 ? S.q.herkunft.join(', ') : S.q.herkunft.length + ' gewählt';
 const dietHint = () => S.q.diet === 'veggie' ? 'Veggie zeigt auch vegane Rezepte.' : S.q.diet === 'fleisch' ? 'Nur Rezepte mit Fleisch oder Fisch.' : '';
+const emptyBox = () => S.loading ? '<p class="empty">Rezepte werden geladen …</p>'
+  : S.loadErr ? `<div class="empty"><p class="err">${esc(S.loadErr)}</p><button class="btn ghost inline" type="button" data-act="reload">Nochmal versuchen</button></div>`
+  : `<div class="empty"><p>Noch gibt es keine Rezepte. Trag das erste ein.</p><button class="btn inline" type="button" data-act="go" data-to="new">Rezept eintragen</button></div>`;
 
-/* Screens */
+/* ---------- Screens ---------- */
+function viewLogin() {
+  return `<section class="screen login">
+    <div class="mark">${ic(I.pot, 28)}Kochen</div>
+    <div style="display:flex;flex-direction:column;gap:8px"><h1 class="h1">Anmelden</h1>
+    <p class="lead">Dein Name und das Passwort, das du bekommen hast.</p></div>
+    <form id="loginForm" class="card">
+      <div class="field"><label class="flabel" for="lName">Name</label><input class="inp" id="lName" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="z. B. mira"></div>
+      <div class="field"><label class="flabel" for="lPass">Passwort</label><input class="inp" id="lPass" type="password" autocomplete="current-password"></div>
+      <button class="btn" id="lBtn" type="submit">Anmelden</button>
+      <p class="msg bad" id="lMsg" role="alert">${sb ? '' : 'Die Verbindung zum Server konnte nicht aufgebaut werden. Lade die Seite neu.'}</p>
+    </form></section>`;
+}
 function viewSearch() {
   const q = S.q;
   return `<section class="screen">
@@ -359,8 +388,8 @@ function viewSearch() {
     <div style="display:flex;flex-direction:column;gap:8px"><h1 class="h1">Worauf habt ihr Lust?</h1>
     <p class="lead">Regler grob einstellen. Darunter sortieren sich die Rezepte aus eurer Runde nach Treffer.</p></div>
     <div class="panel">
-      ${['aufwand', 'zutaten', 'deftig'].map(k => ctl(k, 'q', q[k].v, q[k].on)).join('')}
-      <div class="ctl"><div class="ctl-h"><span class="lbl">Herkunft</span><span class="val" id="v-herkunft">${originVal()}</span></div>
+      ${KEYS.map(k => ctl(k, 'q', q[k].v, q[k].on)).join('')}
+      <div class="ctl"><div class="ctl-h"><span class="lbl">Herkunft</span><span class="val" id="v-herkunft">${esc(originVal())}</span></div>
         <div class="opts" role="group" aria-label="Herkunft">${ORIGINS.map(o => `<button class="opt" type="button" data-act="origin" data-v="${esc(o)}" aria-pressed="${q.herkunft.includes(o)}">${esc(o)}</button>`).join('')}</div></div>
       <div class="ctl"><div class="ctl-h"><span class="lbl">Ernährung</span></div>
         <div class="seg" role="group" aria-label="Ernährung">${[['egal', 'Egal'], ['vegan', 'Vegan'], ['veggie', 'Veggie'], ['fleisch', 'Mit Fleisch']].map(([v, l]) => `<button type="button" data-act="diet" data-v="${v}" aria-pressed="${q.diet === v}">${l}</button>`).join('')}</div>
@@ -371,6 +400,7 @@ function viewSearch() {
 }
 function renderResults() {
   const el = $('#results'); if (!el) return;
+  if (!recipes.length) { S.count = 0; el.innerHTML = emptyBox(); updateJump(); return; }
   const list = recipes.filter(dietOK).map(r => ({ r, s: score(r) })).sort((a, b) => (b.s ?? 0) - (a.s ?? 0) || a.r.title.localeCompare(b.r.title, 'de'));
   S.count = list.length;
   el.innerHTML = `<div class="res-h"><h2>Vorschläge</h2><span>${list.length} von ${recipes.length} Rezepten</span></div>` +
@@ -379,7 +409,7 @@ function renderResults() {
 }
 function updateJump() {
   const j = $('#jump'), r = $('#results');
-  if (S.tab !== 'search' || !r) { j.hidden = true; return; }
+  if (S.tab !== 'search' || !r || !S.count) { j.hidden = true; return; }
   j.innerHTML = `${S.count} Vorschläge ${ic(I.down, 18)}`;
   j.hidden = r.getBoundingClientRect().top < window.innerHeight - 150;
 }
@@ -388,13 +418,14 @@ function viewBrowse() {
   return `<section class="screen">${topbar()}
     <h1 class="h1">Alle Rezepte</h1>
     <input class="inp" id="q-text" type="search" data-f="q" placeholder="Name oder Zutat suchen" value="${esc(S.text)}" aria-label="Rezepte durchsuchen">
-    <p class="rmeta" id="bcount"></p><div class="grid" id="blist"></div></section>`;
+    <p class="rmeta" id="bcount"></p><div class="grid" id="blist"></div><div id="bempty"></div></section>`;
 }
 function renderBrowseList() {
   const q = S.text.trim().toLowerCase();
   const list = recipes.filter(r => !q || [r.title, r.author, ...r.ing.map(i => i[2])].join(' ').toLowerCase().includes(q));
-  $('#bcount').textContent = `${list.length} Rezepte von ${new Set(recipes.map(r => r.author)).size} Leuten`;
-  $('#blist').innerHTML = list.length ? list.map(tile).join('') : '<p class="empty">Kein Rezept gefunden.</p>';
+  $('#bcount').textContent = recipes.length ? `${list.length} Rezepte von ${new Set(recipes.map(r => r.authorId)).size} Leuten` : '';
+  $('#blist').innerHTML = list.map(tile).join('');
+  $('#bempty').innerHTML = !recipes.length ? emptyBox() : !list.length ? '<p class="empty">Kein Rezept gefunden.</p>' : '';
 }
 
 function fmtAmt(a, u, f) {
@@ -407,18 +438,22 @@ function fmtAmt(a, u, f) {
 }
 function viewDetail() {
   const r = byId(S.detailId);
+  const mine = S.user && r.authorId === S.user.id;
   return `<section class="screen">
     <button class="back" type="button" data-act="back">${ic(I.back, 20)}Zurück</button>
     <div class="pic big">${pic(r)}</div>
     <div><h1 class="h1 sm">${esc(r.title)}</h1><p class="by">von ${esc(r.author)}</p></div>
     <div class="panel tagsum">
-      ${['aufwand', 'zutaten', 'deftig'].map(k => `<div class="trow"><span class="tl">${DIM[k].sh}</span><span class="segs" aria-hidden="true">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= r.tags[k] ? 'f' : ''}"></i>`).join('')}</span><span class="tw">${DIM[k].words[r.tags[k] - 1]}</span></div>`).join('')}
+      ${KEYS.map(k => `<div class="trow"><span class="tl">${DIM[k].sh}</span><span class="segs" aria-hidden="true">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= r.tags[k] ? 'f' : ''}"></i>`).join('')}</span><span class="tw">${DIM[k].words[r.tags[k] - 1]}</span></div>`).join('')}
       <div class="chips">${chips(r, false)}</div>
     </div>
     <div class="sec"><div class="sec-h"><h2>Zutaten</h2>
       <div class="stepper"><button type="button" data-act="pp" data-d="-1" aria-label="Weniger Portionen">−</button><span id="pcount"></span><button type="button" data-act="pp" data-d="1" aria-label="Mehr Portionen">+</button></div></div>
       <ul class="ing" id="ings"></ul></div>
     <div class="sec"><h2>So geht's</h2><ol class="steps">${r.steps.map(s => `<li class="step"><span>${esc(s)}</span></li>`).join('')}</ol></div>
+    ${mine ? `<div class="own">${S.confirmDel === r.id
+      ? `<p class="msg bad">Rezept wirklich löschen? Das lässt sich nicht rückgängig machen.</p><div class="own-row"><button class="btn danger inline" type="button" data-act="delYes">Ja, löschen</button><button class="btn ghost inline" type="button" data-act="delNo">Abbrechen</button></div>`
+      : `<div class="own-row"><button class="btn ghost inline" type="button" data-act="edit">Bearbeiten</button><button class="btn ghost inline" type="button" data-act="delAsk">Löschen</button></div>`}</div>` : ''}
   </section>`;
 }
 function renderIngs() {
@@ -427,8 +462,8 @@ function renderIngs() {
   $('#ings').innerHTML = r.ing.map(([a, u, n]) => `<li><span class="am">${esc((fmtAmt(a, u, f) + ' ' + u).trim())}</span><span>${esc(n)}</span></li>`).join('');
 }
 
-/* Neues Rezept */
-const PROMPT = `Wandle das folgende Rezept in genau dieses JSON um. Antworte nur mit dem JSON, ohne Erklärung.
+function buildPrompt() {
+  return `Wandle das folgende Rezept in genau dieses JSON um. Antworte nur mit dem JSON, ohne Erklärung.
 
 {
   "titel": "Name des Gerichts",
@@ -439,7 +474,8 @@ const PROMPT = `Wandle das folgende Rezept in genau dieses JSON um. Antworte nur
     "aufwand": 1 bis 5 (1 = unter 20 Min, 5 = halber Tag),
     "zutaten": 1 bis 5 (1 = nur Basics, 5 = Spezialladen),
     "deftig": 1 bis 5 (1 = sehr deftig, 5 = federleicht),
-    "herkunft": "Deutsch | Italienisch | Mediterran | Asiatisch | Orientalisch | Mexikanisch (oder ein anderes Land bzw. eine Region, falls keins passt)",
+    "gesund": 1 bis 5 (1 = sehr gesund, 5 = ungesund),
+    "herkunft": "${ORIGINS.join(' | ')} (oder ein anderes Land bzw. eine Region, falls keins passt)",
     "ernaehrung": "vegan | veggie | fleisch"
   }
 }
@@ -448,28 +484,22 @@ Regeln: Schritte kurz und einfach halten. Menge als Zahl, bei "etwas Salz" leer 
 
 Hier ist das Rezept:
 `;
-const SAMPLE = 'Klar, hier ist dein Rezept:\n```json\n' + JSON.stringify({
-  titel: 'Kürbissuppe', portionen: 4,
-  zutaten: [{ menge: 800, einheit: 'g', name: 'Hokkaido-Kürbis' }, { menge: 1, einheit: 'Stk', name: 'Zwiebel' }, { menge: 500, einheit: 'ml', name: 'Gemüsebrühe' }, { menge: 200, einheit: 'ml', name: 'Kokosmilch' }, { menge: 1, einheit: 'TL', name: 'Currypulver' }, { menge: null, einheit: '', name: 'Salz' }],
-  schritte: ['Kürbis und Zwiebel würfeln und in Öl anbraten.', 'Curry kurz mitrösten, mit Brühe aufgießen.', '20 Minuten köcheln, bis der Kürbis weich ist.', 'Kokosmilch zugeben, pürieren und mit Salz abschmecken.'],
-  tags: { aufwand: 2, zutaten: 1, deftig: 3, herkunft: 'Österreichisch', ernaehrung: 'vegan' }
-}, null, 2) + '\n```';
-
+}
 function viewNew() {
+  const edit = !!F.editId;
   return `<section class="screen">${topbar()}
-    <div style="display:flex;flex-direction:column;gap:8px"><h1 class="h1">Rezept eintragen</h1>
-    <p class="lead">Von Hand oder in drei Schritten mit KI. Danach kurz prüfen und speichern.</p></div>
-    <div class="card"><h2>Schnell mit KI</h2>
+    <div style="display:flex;flex-direction:column;gap:8px"><h1 class="h1">${edit ? 'Rezept bearbeiten' : 'Rezept eintragen'}</h1>
+    <p class="lead">${edit ? 'Ändere, was nicht stimmt, und speichere.' : 'Von Hand oder in drei Schritten mit KI. Danach kurz prüfen und speichern.'}</p></div>
+    ${edit ? '' : `<div class="card"><h2>Schnell mit KI</h2>
       <ol class="how">
         <li><div class="b"><span>Prompt kopieren</span><button class="btn ghost inline" type="button" data-act="copyPrompt">Prompt kopieren</button>
-          <details id="promptDet"><summary>Prompt ansehen</summary><textarea class="inp mono" id="promptTa" rows="9" readonly>${esc(PROMPT)}</textarea></details></div></li>
+          <details id="promptDet"><summary>Prompt ansehen</summary><textarea class="inp mono" id="promptTa" rows="9" readonly>${esc(buildPrompt())}</textarea></details></div></li>
         <li><div class="b"><span>Rezept als Text oder Foto zusammen mit dem Prompt in Claude oder ChatGPT geben.</span></div></li>
         <li><div class="b"><label for="aiIn">Antwort der KI hier einfügen</label>
           <textarea class="inp mono" id="aiIn" rows="4" data-f="ai" placeholder="{ &quot;titel&quot;: ... }">${esc(F.ai)}</textarea>
           <button class="btn ghost inline" type="button" data-act="applyAI">Ins Formular übernehmen</button>
-          <button class="link" type="button" data-act="sample">Beispielantwort einfügen</button>
           <p class="msg ${F.aiMsg === 'ok' ? 'ok' : 'bad'}" id="aiMsg">${F.aiMsg === 'ok' ? 'Übernommen. Prüf unten kurz die Werte.' : F.aiMsg === 'err' ? 'Das war kein gültiges Rezept-JSON. Kopier die ganze Antwort der KI inklusive der geschweiften Klammern.' : ''}</p></div></li>
-      </ol></div>
+      </ol></div>`}
     <div class="screen" id="form"></div>
   </section>`;
 }
@@ -477,7 +507,7 @@ function renderForm() {
   const t = F.tags;
   $('#form').innerHTML = `
     <div class="field"><span class="flabel">Foto</span>
-      <label class="photo" for="photoIn">${F.photo ? `<img src="${F.photo}" alt="Vorschau">` : `<span class="ph">${ic(I.cam, 28)}<b>Foto aufnehmen oder wählen</b></span>`}</label>
+      <label class="photo" for="photoIn">${F.photo ? `<img src="${esc(F.photo)}" alt="Vorschau">` : `<span class="ph">${ic(I.cam, 28)}<b>Foto aufnehmen oder wählen</b></span>`}</label>
       <input class="vh" id="photoIn" type="file" accept="image/*"></div>
     <div class="field"><label class="flabel" for="fTitle">Name des Gerichts</label><input class="inp" id="fTitle" type="text" data-f="title" value="${esc(F.title)}" placeholder="z. B. Kürbissuppe"></div>
     <div class="field"><span class="flabel">Portionen</span><div><div class="stepper"><button type="button" data-act="fpp" data-d="-1" aria-label="Weniger Portionen">−</button><span>${F.portions} ${F.portions === 1 ? 'Portion' : 'Portionen'}</span><button type="button" data-act="fpp" data-d="1" aria-label="Mehr Portionen">+</button></div></div></div>
@@ -492,49 +522,89 @@ function renderForm() {
         <button class="x" type="button" data-act="rmStep" data-i="${i}" aria-label="Schritt ${i + 1} entfernen">${ic(I.x, 18)}</button></div>`).join('')}
       <button class="btn ghost inline" type="button" data-act="addStep">+ Schritt</button></div></div>
     <div class="panel"><div class="ctl"><div class="ctl-h"><h2 style="font-size:20px">Tags für die Suche</h2></div><p class="hint" style="margin:0">So findet die Runde das Rezept später.</p></div>
-      ${['aufwand', 'zutaten', 'deftig'].map(k => ctl(k, 'f', t[k])).join('')}
-      <div class="ctl"><div class="ctl-h"><span class="lbl">Herkunft</span></div><div class="opts" role="group" aria-label="Herkunft">${ORIGINS.map(o => `<button class="opt" type="button" data-act="fOrigin" data-v="${o}" aria-pressed="${t.herkunft === o}">${esc(o)}</button>`).join('')}${F.addOrigin ? '' : `<button class="opt" type="button" data-act="addOrigin">+ Neu</button>`}</div>${F.addOrigin ? `<div class="newo"><input class="inp" id="oNew" type="text" placeholder="z. B. Georgisch oder Bayern" aria-label="Neue Herkunft"><button class="btn ghost inline" type="button" data-act="saveOrigin">Hinzufügen</button></div>` : ''}</div>
+      ${KEYS.map(k => ctl(k, 'f', t[k])).join('')}
+      <div class="ctl"><div class="ctl-h"><span class="lbl">Herkunft</span></div><div class="opts" role="group" aria-label="Herkunft">${ORIGINS.map(o => `<button class="opt" type="button" data-act="fOrigin" data-v="${esc(o)}" aria-pressed="${t.herkunft === o}">${esc(o)}</button>`).join('')}${F.addOrigin ? '' : `<button class="opt" type="button" data-act="addOrigin">+ Neu</button>`}</div>${F.addOrigin ? `<div class="newo"><input class="inp" id="oNew" type="text" placeholder="z. B. Georgisch oder Bayern" aria-label="Neue Herkunft"><button class="btn ghost inline" type="button" data-act="saveOrigin">Hinzufügen</button></div>` : ''}</div>
       <div class="ctl"><div class="ctl-h"><span class="lbl">Ernährung</span></div><div class="seg" role="group" aria-label="Ernährung">${Object.entries(DIETS).map(([v, l]) => `<button type="button" data-act="fDiet" data-v="${v}" aria-pressed="${t.diet === v}">${l}</button>`).join('')}</div></div>
     </div>
-    ${F.err ? `<p class="err">${esc(F.err)}</p>` : ''}
-    <button class="btn" type="button" data-act="save">Rezept speichern</button>`;
+    ${F.err ? `<p class="err" role="alert">${esc(F.err)}</p>` : ''}
+    <button class="btn" type="button" data-act="save" ${S.saving ? 'disabled' : ''}>${S.saving ? 'Speichert …' : F.editId ? 'Änderungen speichern' : 'Rezept speichern'}</button>
+    ${F.editId ? '<button class="btn ghost" type="button" data-act="cancelEdit">Abbrechen</button>' : ''}`;
   document.querySelectorAll('#form .rng').forEach(paintRange);
 }
-
-function viewLogin() {
+function viewAccount() {
   return `<section class="screen">
     <button class="back" type="button" data-act="back">${ic(I.back, 20)}Zurück</button>
-    <div style="display:flex;flex-direction:column;gap:8px"><h1 class="h1">Anmelden</h1>
-    <p class="lead">Dein Name und das Passwort, das du bekommen hast.</p></div>
-    <div class="card">
-      <div class="field"><label class="flabel" for="lName">Name</label><input class="inp" id="lName" type="text" autocomplete="username" autocapitalize="none" placeholder="z. B. mira"></div>
-      <div class="field"><label class="flabel" for="lPass">Passwort</label><input class="inp" id="lPass" type="password" autocomplete="current-password"></div>
-      <button class="btn" type="button" data-act="sendLink">Anmelden</button>
-      <p class="hint">Prototyp: Hier wird noch nichts geprüft.</p>
-    </div></section>`;
+    <h1 class="h1 sm">Hallo ${esc(S.user.name)}</h1>
+    <form id="pwForm" class="card"><h2>Passwort ändern</h2>
+      <div class="field"><label class="flabel" for="pw1">Neues Passwort (mindestens 6 Zeichen)</label><input class="inp" id="pw1" type="password" autocomplete="new-password"></div>
+      <button class="btn" type="submit">Passwort speichern</button>
+      <p class="msg" id="pwMsg" role="status"></p></form>
+    <button class="btn ghost" type="button" data-act="logout">Abmelden</button>
+  </section>`;
 }
 
-/* Rendern und Navigation */
+/* ---------- Rendern und Navigation ---------- */
 const TABS = [['search', 'Suchen', I.search], ['browse', 'Rezepte', I.list], ['new', 'Neu', I.plus]];
+const SUB = ['detail', 'account'];
 function renderTabs() {
-  const cur = S.tab === 'detail' || S.tab === 'login' ? S.prev : S.tab;
+  const cur = SUB.includes(S.tab) ? S.prev : S.tab;
   $('#tabs').innerHTML = TABS.map(([k, l, p]) => `<button class="tab" type="button" data-act="go" data-to="${k}" ${k === cur ? 'aria-current="page"' : ''}><span class="ico">${ic(p)}</span>${l}</button>`).join('');
 }
 function render() {
-  $('#app').innerHTML = ({ search: viewSearch, browse: viewBrowse, new: viewNew, detail: viewDetail, login: viewLogin })[S.tab]();
+  if (!S.user) S.tab = 'login';
+  if (S.tab === 'detail' && !byId(S.detailId)) S.tab = S.prev;
+  $('#tabsNav').hidden = !S.user;
+  $('#app').innerHTML = ({ login: viewLogin, search: viewSearch, browse: viewBrowse, new: viewNew, detail: viewDetail, account: viewAccount })[S.tab]();
   if (S.tab === 'search') renderResults();
   if (S.tab === 'browse') renderBrowseList();
   if (S.tab === 'detail') renderIngs();
   if (S.tab === 'new') renderForm();
   document.querySelectorAll('#app .rng').forEach(paintRange);
-  renderTabs(); updateJump();
+  if (S.user) renderTabs();
+  updateJump();
 }
-function go(to) { if (to !== 'login' && to !== 'detail') S.prev = to; else if (S.tab !== 'detail' && S.tab !== 'login') S.prev = S.tab; S.tab = to; render(); window.scrollTo(0, 0); }
+function go(to) {
+  if (!SUB.includes(to)) S.prev = to; else if (!SUB.includes(S.tab)) S.prev = S.tab;
+  S.tab = to; S.confirmDel = null; render(); window.scrollTo(0, 0);
+}
 let tt;
-function toast(m) { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => { t.hidden = true; }, 2800); }
+function toast(m) { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => { t.hidden = true; }, 3200); }
 function setPressed(btn) { btn.parentElement.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false')); }
 
-/* KI-Antwort einlesen */
+/* ---------- Anmelden ---------- */
+const nameOf = email => String(email || '').split('@')[0];
+async function enter(user) {
+  S.user = { id: user.id, name: nameOf(user.email) };
+  S.tab = 'search'; S.prev = 'search'; S.loading = true; render();
+  await loadRecipes();
+  render();
+}
+async function doLogin() {
+  const name = $('#lName').value.trim().toLowerCase().replace(/\s+/g, ''), pw = $('#lPass').value, msg = $('#lMsg'), btn = $('#lBtn');
+  if (!sb) return;
+  if (!name || !pw) { msg.textContent = 'Bitte Name und Passwort eintragen.'; return; }
+  btn.disabled = true; btn.textContent = 'Melde an …'; msg.textContent = '';
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email: `${name}@${EMAIL_DOMAIN}`, password: pw });
+    if (error) throw error;
+    await enter(data.user);
+  } catch (e) {
+    const net = /fetch|network/i.test(String(e && e.message));
+    msg.textContent = net ? 'Keine Verbindung zum Server. Prüf das Internet.' : 'Name oder Passwort stimmt nicht.';
+    btn.disabled = false; btn.textContent = 'Anmelden';
+  }
+}
+async function boot() {
+  if (!sb) { render(); return; }
+  sb.auth.onAuthStateChange(ev => { if (ev === 'SIGNED_OUT' && S.user) { S.user = null; recipes = []; F = newForm(); render(); } });
+  try {
+    const { data } = await sb.auth.getSession();
+    if (data && data.session) { await enter(data.session.user); return; }
+  } catch (e) { /* weiter zum Login */ }
+  render();
+}
+
+/* ---------- KI-Antwort einlesen ---------- */
 function applyAI() {
   const raw = F.ai || '', a = raw.indexOf('{'), b = raw.lastIndexOf('}');
   try {
@@ -543,12 +613,14 @@ function applyAI() {
     const cl = n => Math.min(5, Math.max(1, Math.round(+n) || 3));
     const unit = u => { u = String(u || '').trim(); return u === 'Stück' ? 'Stk' : UNITS.includes(u) ? u : ''; };
     F.title = String(j.titel || '');
-    F.portions = Math.min(20, Math.max(1, Math.round(+j.portionen) || 2));
+    F.portions = Math.min(50, Math.max(1, Math.round(+j.portionen) || 2));
     F.ings = (j.zutaten || []).map(z => ({ a: z.menge == null ? '' : String(z.menge).replace('.', ','), u: unit(z.einheit), n: String(z.name || '') }));
     F.steps = (j.schritte || []).map(String);
     if (!F.ings.length) F.ings = [blankIng()];
     if (!F.steps.length) F.steps = [''];
-    F.tags = { aufwand: cl(g.aufwand), zutaten: cl(g.zutaten), deftig: cl(g.deftig), herkunft: (() => { const h = String(g.herkunft || '').trim(); if (!h) return 'Deutsch'; const ex = ORIGINS.find(o => o.toLowerCase() === h.toLowerCase()); if (ex) return ex; ORIGINS.push(h); return h; })(), diet: DIETS[g.ernaehrung] ? g.ernaehrung : 'veggie' };
+    const h = String(g.herkunft || '').trim();
+    F.tags = { aufwand: cl(g.aufwand), zutaten: cl(g.zutaten), deftig: cl(g.deftig), gesund: cl(g.gesund), herkunft: h || 'Deutsch', diet: DIETS[g.ernaehrung] ? g.ernaehrung : 'veggie' };
+    rebuildOrigins();
     F.aiMsg = 'ok'; F.err = '';
   } catch (e) { F.aiMsg = 'err'; }
   const m = $('#aiMsg');
@@ -556,18 +628,57 @@ function applyAI() {
   m.textContent = F.aiMsg === 'ok' ? 'Übernommen. Prüf unten kurz die Werte.' : 'Das war kein gültiges Rezept-JSON. Kopier die ganze Antwort der KI inklusive der geschweiften Klammern.';
   if (F.aiMsg === 'ok') { renderForm(); $('#form').scrollIntoView(); }
 }
+
+/* ---------- Speichern, Bearbeiten, Löschen ---------- */
 const parseAmt = a => { const n = parseFloat(String(a).replace(',', '.')); return isNaN(n) ? null : n; };
-function save() {
+async function save() {
+  if (S.saving) return;
   const title = F.title.trim(), ings = F.ings.filter(i => i.n.trim()), steps = F.steps.map(s => s.trim()).filter(Boolean), miss = [];
   if (!title) miss.push('einen Namen');
   if (!ings.length) miss.push('mindestens eine Zutat');
   if (!steps.length) miss.push('mindestens einen Schritt');
   if (miss.length) { F.err = 'Es fehlt noch ' + miss.join(', ') + '.'; renderForm(); return; }
-  const id = 'u' + Date.now(), hue = Math.floor(Math.random() * 360);
-  recipes.unshift({ id, title, author: 'Du', portions: F.portions, hue, seed: Math.floor(Math.random() * 9999), photo: F.photo,
-    ing: ings.map(i => [parseAmt(i.a), i.u, i.n.trim()]), steps, tags: { ...F.tags } });
-  F = newForm(); S.prev = 'browse'; S.detailId = id; D = { portions: byId(id).portions }; S.tab = 'detail';
-  render(); window.scrollTo(0, 0); toast('Rezept gespeichert. Die Runde sieht es jetzt.');
+  S.saving = true; F.err = ''; renderForm();
+  try {
+    let path = F.photoPath || null;
+    if (F.photoBlob) {
+      const p = `${S.user.id}/${uuid()}.jpg`;
+      const up = await sb.storage.from('recipe-photos').upload(p, F.photoBlob, { contentType: 'image/jpeg', cacheControl: '31536000' });
+      if (up.error) throw up.error;
+      path = p;
+    }
+    const row = { title, portions: F.portions, photo_path: path,
+      ingredients: ings.map(i => ({ menge: parseAmt(i.a), einheit: i.u, name: i.n.trim() })), steps,
+      aufwand: F.tags.aufwand, zutaten: F.tags.zutaten, deftig: F.tags.deftig, gesund: F.tags.gesund, herkunft: F.tags.herkunft, ernaehrung: F.tags.diet };
+    const res = F.editId
+      ? await sb.from('recipes').update(row).eq('id', F.editId).select().single()
+      : await sb.from('recipes').insert(row).select().single();
+    if (res.error) throw res.error;
+    const id = res.data.id, wasEdit = !!F.editId;
+    F = newForm();
+    await loadRecipes();
+    S.saving = false; S.prev = 'browse'; S.detailId = id; D = { portions: byId(id) ? byId(id).portions : 2 }; S.tab = 'detail';
+    render(); window.scrollTo(0, 0);
+    toast(wasEdit ? 'Änderungen gespeichert.' : 'Rezept gespeichert. Die Runde sieht es jetzt.');
+  } catch (e) {
+    S.saving = false;
+    F.err = 'Speichern hat nicht geklappt: ' + ((e && e.message) || 'unbekannter Fehler') + '. Deine Eingaben sind noch da, versuch es nochmal.';
+    renderForm();
+  }
+}
+function startEdit() {
+  const r = byId(S.detailId); if (!r) return;
+  F = { ...newForm(), editId: r.id, title: r.title, portions: r.portions, photo: r.photo, photoPath: r.photoPath,
+    ings: r.ing.map(([a, u, n]) => ({ a: a == null ? '' : String(a).replace('.', ','), u: UNITS.includes(u) ? u : '', n })),
+    steps: [...r.steps], tags: { ...r.tags } };
+  rebuildOrigins(); S.tab = 'new'; S.confirmDel = null; render(); window.scrollTo(0, 0);
+}
+async function deleteRecipe() {
+  const id = S.detailId;
+  const { error } = await sb.from('recipes').delete().eq('id', id);
+  if (error) { toast('Löschen hat nicht geklappt: ' + error.message); return; }
+  S.confirmDel = null; await loadRecipes();
+  S.tab = S.prev === 'new' ? 'browse' : S.prev; render(); window.scrollTo(0, 0); toast('Rezept gelöscht.');
 }
 function handlePhoto(file) {
   if (!file) return;
@@ -578,8 +689,11 @@ function handlePhoto(file) {
       const s = Math.min(1, 1200 / Math.max(img.width, img.height)), c = document.createElement('canvas');
       c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      F.photo = c.toDataURL('image/jpeg', .82);
-      const l = $('.photo'); if (l) l.innerHTML = `<img src="${F.photo}" alt="Vorschau">`;
+      c.toBlob(blob => {
+        if (!blob) { toast('Das Bild konnte nicht verarbeitet werden.'); return; }
+        F.photoBlob = blob; F.photo = URL.createObjectURL(blob);
+        const l = $('.photo'); if (l) l.innerHTML = `<img src="${F.photo}" alt="Vorschau">`;
+      }, 'image/jpeg', .82);
     };
     img.onerror = () => toast('Das Bild konnte nicht gelesen werden.');
     img.src = rd.result;
@@ -587,7 +701,7 @@ function handlePhoto(file) {
   rd.readAsDataURL(file);
 }
 
-/* Ereignisse */
+/* ---------- Ereignisse ---------- */
 document.addEventListener('input', e => {
   const t = e.target;
   if (t.classList.contains('rng')) {
@@ -609,12 +723,24 @@ document.addEventListener('input', e => {
   else if (f === 'ai') F.ai = t.value;
 });
 document.addEventListener('change', e => { if (e.target.id === 'photoIn') handlePhoto(e.target.files[0]); });
+document.addEventListener('submit', async e => {
+  e.preventDefault();
+  if (e.target.id === 'loginForm') doLogin();
+  if (e.target.id === 'pwForm') {
+    const pw = $('#pw1').value, m = $('#pwMsg');
+    if (pw.length < 6) { m.className = 'msg bad'; m.textContent = 'Mindestens 6 Zeichen.'; return; }
+    const { error } = await sb.auth.updateUser({ password: pw });
+    m.className = 'msg ' + (error ? 'bad' : 'ok');
+    m.textContent = error ? 'Das hat nicht geklappt: ' + error.message : 'Passwort geändert.';
+    if (!error) $('#pw1').value = '';
+  }
+});
 document.addEventListener('click', async e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const a = b.dataset.act, d = b.dataset;
-  if (a === 'go') { go(d.to); }
-  else if (a === 'open') { S.prev = S.tab; S.scrollY = window.scrollY; S.detailId = d.id; D = { portions: byId(d.id).portions }; S.tab = 'detail'; render(); window.scrollTo(0, 0); }
-  else if (a === 'back') { S.tab = S.prev; render(); window.scrollTo(0, S.scrollY || 0); }
+  if (a === 'go') { if (d.to === 'new' && F.editId) F = newForm(); go(d.to); }
+  else if (a === 'open') { S.prev = S.tab; S.scrollY = window.scrollY; S.detailId = d.id; S.confirmDel = null; D = { portions: byId(d.id).portions }; S.tab = 'detail'; render(); window.scrollTo(0, 0); }
+  else if (a === 'back') { S.tab = S.prev; S.confirmDel = null; render(); window.scrollTo(0, S.scrollY || 0); }
   else if (a === 'egal') {
     const k = d.key, c = b.closest('.ctl'); S.q[k].on = !S.q[k].on;
     c.classList.toggle('off', !S.q[k].on); b.setAttribute('aria-pressed', String(!S.q[k].on));
@@ -626,8 +752,8 @@ document.addEventListener('click', async e => {
   }
   else if (a === 'diet') { S.q.diet = d.v; setPressed(b); $('#dietHint').textContent = dietHint(); renderResults(); }
   else if (a === 'jump') { $('#results').scrollIntoView(); }
-  else if (a === 'pp') { D.portions = Math.min(20, Math.max(1, D.portions + +d.d)); renderIngs(); }
-  else if (a === 'fpp') { F.portions = Math.min(20, Math.max(1, F.portions + +d.d)); renderForm(); }
+  else if (a === 'pp') { D.portions = Math.min(50, Math.max(1, D.portions + +d.d)); renderIngs(); }
+  else if (a === 'fpp') { F.portions = Math.min(50, Math.max(1, F.portions + +d.d)); renderForm(); }
   else if (a === 'addIng') { F.ings.push(blankIng()); renderForm(); }
   else if (a === 'rmIng') { if (F.ings.length > 1) F.ings.splice(+d.i, 1); else F.ings[0] = blankIng(); renderForm(); }
   else if (a === 'addStep') { F.steps.push(''); renderForm(); }
@@ -639,21 +765,34 @@ document.addEventListener('click', async e => {
     const v = $('#oNew').value.trim();
     if (!v) { toast('Gib erst einen Namen ein.'); return; }
     const ex = ORIGINS.find(o => o.toLowerCase() === v.toLowerCase()), name = ex || v;
-    if (!ex) ORIGINS.push(name);
-    F.tags.herkunft = name; F.addOrigin = false; renderForm();
+    F.tags.herkunft = name; F.addOrigin = false; rebuildOrigins(); renderForm();
     toast(ex ? name + ' gab es schon und ist jetzt gewählt.' : 'Neue Herkunft angelegt: ' + name);
   }
   else if (a === 'save') save();
   else if (a === 'applyAI') applyAI();
-  else if (a === 'sample') { F.ai = SAMPLE; $('#aiIn').value = SAMPLE; applyAI(); }
   else if (a === 'copyPrompt') {
-    try { await navigator.clipboard.writeText(PROMPT); toast('Prompt kopiert. Jetzt in Claude oder ChatGPT einfügen.'); }
-    catch (err) { const dt = $('#promptDet'); dt.open = true; const ta = $('#promptTa'); ta.focus(); ta.select(); toast('Prompt markiert. Jetzt kopieren.'); }
+    try { await navigator.clipboard.writeText(buildPrompt()); toast('Prompt kopiert. Jetzt in Claude oder ChatGPT einfügen.'); }
+    catch (err) { $('#promptDet').open = true; const ta = $('#promptTa'); ta.focus(); ta.select(); toast('Prompt markiert. Jetzt kopieren.'); }
   }
-  else if (a === 'sendLink') { S.tab = 'search'; render(); window.scrollTo(0, 0); toast('Prototyp: Hier würde der Login geprüft.'); }
+  else if (a === 'edit') startEdit();
+  else if (a === 'cancelEdit') { F = newForm(); S.tab = 'detail'; render(); window.scrollTo(0, 0); }
+  else if (a === 'delAsk') { S.confirmDel = S.detailId; render(); }
+  else if (a === 'delNo') { S.confirmDel = null; render(); }
+  else if (a === 'delYes') deleteRecipe();
+  else if (a === 'logout') { await sb.auth.signOut(); }
+  else if (a === 'reload') { S.loading = true; render(); await loadRecipes(); render(); }
 });
 window.addEventListener('scroll', updateJump, { passive: true });
 window.addEventListener('resize', updateJump);
+document.addEventListener('visibilitychange', async () => {
+  if (document.hidden || !S.user || S.loading || S.saving || Date.now() - S.lastLoad < 60000) return;
+  if (S.tab !== 'search' && S.tab !== 'browse') return;
+  const typing = document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName);
+  await loadRecipes();
+  if (!typing && (S.tab === 'search' || S.tab === 'browse')) render();
+});
 
-render();
+boot();
 </script>
+</body>
+</html>
