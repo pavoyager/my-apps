@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Kochen</title>
 <meta name="theme-color" content="#F1F5F0" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E1511" media="(prefers-color-scheme: dark)">
@@ -27,6 +27,7 @@
   --forest: #1F5C45;
   --vegan: #17623D;  --vegan-bg: #D6EDDF;
   --veggie: #4E6C0E; --veggie-bg: #E8F0CC;
+  --fisch: #1F5A8A; --fisch-bg: #D9E8F5;
   --fleisch: #9B3F25; --fleisch-bg: #F6DDD3;
   --err: #B3261E;
   --font-display: 'Bricolage Grotesque', 'Trebuchet MS', system-ui, sans-serif;
@@ -36,7 +37,7 @@
   :root:not([data-theme="light"]) {
     --bg: #0E1511; --surface: #17211B; --surface-2: #213028; --ink: #E8EFE9; --muted: #9AAAA0; --line: #2B3A31;
     --accent: #F2B83A; --accent-ink: #1A1400; --forest: #7FD1A8;
-    --vegan: #7FDBA8; --vegan-bg: #1B3A2A; --veggie: #C8E07A; --veggie-bg: #323B17; --fleisch: #F3A98F; --fleisch-bg: #44261C;
+    --vegan: #7FDBA8; --vegan-bg: #1B3A2A; --veggie: #C8E07A; --veggie-bg: #323B17; --fisch: #8FC4F0; --fisch-bg: #1B3347; --fleisch: #F3A98F; --fleisch-bg: #44261C;
     --err: #FFB4AB;
     color-scheme: dark;
   }
@@ -44,7 +45,7 @@
 :root[data-theme="dark"] {
   --bg: #0E1511; --surface: #17211B; --surface-2: #213028; --ink: #E8EFE9; --muted: #9AAAA0; --line: #2B3A31;
   --accent: #F2B83A; --accent-ink: #1A1400; --forest: #7FD1A8;
-  --vegan: #7FDBA8; --vegan-bg: #1B3A2A; --veggie: #C8E07A; --veggie-bg: #323B17; --fleisch: #F3A98F; --fleisch-bg: #44261C;
+  --vegan: #7FDBA8; --vegan-bg: #1B3A2A; --veggie: #C8E07A; --veggie-bg: #323B17; --fisch: #8FC4F0; --fisch-bg: #1B3347; --fleisch: #F3A98F; --fleisch-bg: #44261C;
   --err: #FFB4AB;
   color-scheme: dark;
 }
@@ -52,7 +53,7 @@
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 img { max-width: 100%; }
-html { background: var(--bg); }
+html { background: var(--bg); touch-action: pan-x pan-y; }
 body {
   margin: 0;
   background: var(--bg); color: var(--ink);
@@ -128,6 +129,7 @@ form { margin: 0; display: contents; }
 .chip { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
 .chip.vegan { background: var(--vegan-bg); color: var(--vegan); }
 .chip.veggie { background: var(--veggie-bg); color: var(--veggie); }
+.chip.fisch { background: var(--fisch-bg); color: var(--fisch); }
 .chip.fleisch { background: var(--fleisch-bg); color: var(--fleisch); }
 .empty { padding: 24px 0; color: var(--muted); display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
 
@@ -180,7 +182,7 @@ textarea.inp { resize: vertical; min-height: 64px; }
 .msg.ok { color: var(--vegan); }
 .msg.bad, .err { color: var(--err); font-weight: 600; }
 details summary { cursor: pointer; font-weight: 600; color: var(--forest); min-height: 36px; display: flex; align-items: center; }
-.mono { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; line-height: 1.5; }
+.mono { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 16px; line-height: 1.4; }
 .field { display: flex; flex-direction: column; gap: 8px; }
 .flabel { font-size: 12px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
 .photo { display: grid; place-items: center; aspect-ratio: 16 / 10; max-width: 100%; border: 2px dashed var(--line); border-radius: 22px; background: var(--surface); overflow: hidden; cursor: pointer; color: var(--muted); text-align: center; }
@@ -242,7 +244,7 @@ const hash = s => { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCo
 
 const BASE_ORIGINS = ['Deutsch', 'Italienisch', 'Mediterran', 'Asiatisch', 'Orientalisch', 'Mexikanisch'];
 const ORIGINS = [...BASE_ORIGINS];
-const DIETS = { vegan: 'Vegan', veggie: 'Veggie', fleisch: 'Mit Fleisch' };
+const DIETS = { vegan: 'Vegan', veggie: 'Veggie', fisch: 'Fisch', fleisch: 'Fleisch' };
 const UNITS = ['', 'g', 'kg', 'ml', 'l', 'EL', 'TL', 'Stk', 'Bund', 'Dose', 'Prise'];
 const DIM = {
   aufwand: { label: 'Aufwand', sh: 'Aufwand', words: ['Blitzschnell', 'Entspannt', 'Normal', 'Aufwendig', 'Großprojekt'], ends: ['Unter 20 Min', 'Halber Tag'] },
@@ -327,8 +329,8 @@ function dietOK(r) {
   const d = S.q.diet;
   if (d === 'egal') return true;
   if (d === 'vegan') return r.tags.diet === 'vegan';
-  if (d === 'veggie') return r.tags.diet !== 'fleisch';
-  return r.tags.diet === 'fleisch';
+  if (d === 'veggie') return r.tags.diet === 'vegan' || r.tags.diet === 'veggie';
+  return r.tags.diet === d;
 }
 
 /* ---------- Bausteine ---------- */
@@ -363,7 +365,7 @@ function topbar() {
   return `<div class="top"><div class="mark">${ic(I.pot, 24)}Kochen</div><button class="me" type="button" data-act="go" data-to="account" aria-label="Konto von ${esc(n)}">${esc(n.charAt(0) || '?')}</button></div>`;
 }
 const originVal = () => !S.q.herkunft.length ? 'Egal' : S.q.herkunft.length <= 2 ? S.q.herkunft.join(', ') : S.q.herkunft.length + ' gewählt';
-const dietHint = () => S.q.diet === 'veggie' ? 'Veggie zeigt auch vegane Rezepte.' : S.q.diet === 'fleisch' ? 'Nur Rezepte mit Fleisch oder Fisch.' : '';
+const dietHint = () => ({ veggie: 'Veggie zeigt auch vegane Rezepte.', fisch: 'Nur Rezepte mit Fisch oder Meeresfrüchten.', fleisch: 'Nur Rezepte mit Fleisch.' })[S.q.diet] || '';
 const emptyBox = () => S.loading ? '<p class="empty">Rezepte werden geladen …</p>'
   : S.loadErr ? `<div class="empty"><p class="err">${esc(S.loadErr)}</p><button class="btn ghost inline" type="button" data-act="reload">Nochmal versuchen</button></div>`
   : `<div class="empty"><p>Noch gibt es keine Rezepte. Trag das erste ein.</p><button class="btn inline" type="button" data-act="go" data-to="new">Rezept eintragen</button></div>`;
@@ -392,7 +394,7 @@ function viewSearch() {
       <div class="ctl"><div class="ctl-h"><span class="lbl">Herkunft</span><span class="val" id="v-herkunft">${esc(originVal())}</span></div>
         <div class="opts" role="group" aria-label="Herkunft">${ORIGINS.map(o => `<button class="opt" type="button" data-act="origin" data-v="${esc(o)}" aria-pressed="${q.herkunft.includes(o)}">${esc(o)}</button>`).join('')}</div></div>
       <div class="ctl"><div class="ctl-h"><span class="lbl">Ernährung</span></div>
-        <div class="seg" role="group" aria-label="Ernährung">${[['egal', 'Egal'], ['vegan', 'Vegan'], ['veggie', 'Veggie'], ['fleisch', 'Mit Fleisch']].map(([v, l]) => `<button type="button" data-act="diet" data-v="${v}" aria-pressed="${q.diet === v}">${l}</button>`).join('')}</div>
+        <div class="seg" role="group" aria-label="Ernährung">${[['egal', 'Egal'], ['vegan', 'Vegan'], ['veggie', 'Veggie'], ['fisch', 'Fisch'], ['fleisch', 'Fleisch']].map(([v, l]) => `<button type="button" data-act="diet" data-v="${v}" aria-pressed="${q.diet === v}">${l}</button>`).join('')}</div>
         <p class="hint" id="dietHint">${dietHint()}</p></div>
     </div>
     <div id="results"></div>
@@ -476,7 +478,7 @@ function buildPrompt() {
     "deftig": 1 bis 5 (1 = sehr deftig, 5 = federleicht),
     "gesund": 1 bis 5 (1 = sehr gesund, 5 = ungesund),
     "herkunft": "${ORIGINS.join(' | ')} (oder ein anderes Land bzw. eine Region, falls keins passt)",
-    "ernaehrung": "vegan | veggie | fleisch"
+    "ernaehrung": "vegan | veggie | fisch | fleisch (fisch = enthält Fisch oder Meeresfrüchte, aber kein Fleisch)"
   }
 }
 
