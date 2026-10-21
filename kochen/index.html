@@ -221,7 +221,8 @@ details summary { cursor: pointer; font-weight: 600; color: var(--forest); min-h
 /* ---------- Verbindung ---------- */
 const SB_URL = 'https://jlaewbjfmsxyfcsvhyfz.supabase.co';
 const SB_KEY = 'sb_publishable_YXlEeH0I8Bgrh2DEPtD4Jg_SB5GwD1E';   // öffentlich, geschützt durch die Zugriffsregeln in der Datenbank
-const EMAIL_DOMAIN = 'kochen.app';                                 // Login-Name + @kochen.app ergibt die interne E-Mail
+const APP_VERSION = '6 (mit Fisch, ohne Zoom)';
+const EMAIL_DOMAIN = 'kochen.app';                                // Login-Name + @kochen.app ergibt die interne E-Mail
 let sb = null;
 try { sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { storageKey: 'kochen-auth', persistSession: true, autoRefreshToken: true } }); } catch (e) { sb = null; }
 
@@ -381,7 +382,7 @@ function viewLogin() {
       <div class="field"><label class="flabel" for="lPass">Passwort</label><input class="inp" id="lPass" type="password" autocomplete="current-password"></div>
       <button class="btn" id="lBtn" type="submit">Anmelden</button>
       <p class="msg bad" id="lMsg" role="alert">${sb ? '' : 'Die Verbindung zum Server konnte nicht aufgebaut werden. Lade die Seite neu.'}</p>
-    </form></section>`;
+    </form><p class="hint">Version ${APP_VERSION}</p></section>`;
 }
 function viewSearch() {
   const q = S.q;
@@ -542,6 +543,7 @@ function viewAccount() {
       <button class="btn" type="submit">Passwort speichern</button>
       <p class="msg" id="pwMsg" role="status"></p></form>
     <button class="btn ghost" type="button" data-act="logout">Abmelden</button>
+    <p class="hint">Version ${APP_VERSION}</p>
   </section>`;
 }
 
